@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FashionWave Retail Analytics - Executive Presentation & BI Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Chart.js CDN with offline canvas fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Top Presentation Header
+       ========================================================================== */ -->
+  <header id="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+        </svg>
+        <span>FashionWave</span>
+      </div>
+      <span class="case-tag">Retail Analytics Case Study</span>
+    </div>
+
+    <div class="header-center">
+      <span id="slide-title-preview" class="slide-title-preview">Slide 1: Title Slide</span>
+      <select id="slide-jump-select" class="slide-jump-select">
+        <option value="1">1. Title Slide: Executive Readout</option>
+        <option value="2">2. Business Problem & Objectives</option>
+        <option value="3">3. Dataset Architecture & Schema</option>
+        <option value="4">4. Data Cleaning & Calculated Metrics</option>
+        <option value="5">5. Executive KPI Scorecard</option>
+        <option value="6">6. EDA & Statistical Distributions</option>
+        <option value="7">7. Category Profitability Dynamics</option>
+        <option value="8">8. Weekend vs Weekday Dynamics</option>
+        <option value="9">9. Discount Impact & Elasticity</option>
+        <option value="10">10. Store Benchmarking & Rankings</option>
+        <option value="11">11. Store Performance Matrix – Business Opportunities</option>
+        <option value="12">12. Customer & Channel Monetization</option>
+        <option value="13">13. Hidden Insights & Anomaly Detection</option>
+        <option value="14">14. Strategic Recommendations & ROI</option>
+        <option value="15">15. Interactive Retail BI Dashboard</option>
+        <option value="16">16. Executive Synthesis & Governance Targets</option>
+      </select>
+    </div>
+
+    <div class="header-controls">
+      <button id="btn-header-dashboard" class="btn-header active-highlight">
+        <span>📊 Open BI Dashboard</span>
+      </button>
+      <button id="btn-fullscreen" class="btn-header">
+        <span>⛶ Fullscreen</span>
+      </button>
+    </div>
+
+    <div id="slide-progress-bar-container">
+      <div id="slide-progress-bar"></div>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       Main Presentation Viewport (16:9 Canvas)
+       ========================================================================== -->
+  <main id="presentation-viewport">
+    <div class="deck-container">
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 1: Title Slide
+           ---------------------------------------------------------------------- -->
+      <section class="slide active" id="slide-1">
+        <div class="slide-title-layout">
+          <div class="hero-meta-tags">
+            <span class="badge badge-teal">Case Study Readout</span>
+            <span class="badge badge-blue">1,500 Transactions • 50 Stores</span>
+            <span class="badge badge-amber">Nov 2024 – Nov 2026</span>
+          </div>
+
+          <div class="hero-main-content">
+            <h1 class="hero-headline">FashionWave Retail Analytics</h1>
+            <p class="hero-subheadline">
+              A Comprehensive 2-Year Exploratory Data Analysis, Margin Diagnostics, Store Network Benchmarking & Strategic Executive Roadmap.
+            </p>
+
+            <div class="hero-highlights-grid">
+              <div class="hero-metric-item">
+                <span class="hero-metric-label">Total Net Revenue</span>
+                <span class="hero-metric-val">₹35.42L</span>
+                <span class="hero-metric-desc">₹38.56L Gross Sales</span>
+              </div>
+              <div class="hero-metric-item">
+                <span class="hero-metric-label">Net Operating Profit</span>
+                <span class="hero-metric-val">₹12.32L</span>
+                <span class="hero-metric-desc">34.78% Profit Margin</span>
+              </div>
+              <div class="hero-metric-item">
+                <span class="hero-metric-label">Transaction Volume</span>
+                <span class="hero-metric-val">1,500</span>
+                <span class="hero-metric-desc">3,176 Units Sold</span>
+              </div>
+              <div class="hero-metric-item">
+                <span class="hero-metric-label">Average Order Value</span>
+                <span class="hero-metric-val">₹2,361</span>
+                <span class="hero-metric-desc">₹1,115 Unit ASP</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-footer-meta">
+            <div>
+              <span>Role: <strong>Senior Retail Data Analyst</strong></span> •
+              <span>Scope: <strong>National Store Network (50 Locations)</strong></span> •
+              <span>Currency: <strong>INR (₹)</strong></span>
+            </div>
+            <div style="display:flex; gap:14px;">
+              <button id="btn-start-presentation" class="hero-btn-action">Start Presentation →</button>
+              <button id="btn-jump-dashboard" class="btn-header" style="background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.25);">Interactive Dashboard ↗</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 2: Business Problem & Objectives
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-2">
+        <div class="slide-header">
+          <div class="slide-subtitle">01 / Strategic Foundation</div>
+          <h2 class="slide-title">Business Problem & Analytical Objectives</h2>
+          <p class="slide-desc">Resolving margin compression, promotional inefficiencies, and retail network variance across FashionWave's 50 retail locations.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid">
+            <div class="card" style="display:flex; flex-direction:column; gap:16px;">
+              <div class="card-title-sm">Executive Context & Challenge</div>
+              <p style="font-size:15px; color:var(--slate-800); line-height:1.65;">
+                FashionWave operates 50 brick-and-mortar retail stores across India, merchandising three core lines: <strong>Clothing, Shoes, and Accessories</strong>. Over the 24-month period between November 2024 and November 2026, leadership identified steady top-line gross revenue but increasing variability in store profitability and gross margin leakage.
+              </p>
+              <div class="callout-box amber">
+                <strong>Core Business Dilemma:</strong> Are discounts driving incremental purchasing volume, or merely transferring margin to bargain shoppers? Do weekends warrant premium store labor allocation? Why does a 7.1x performance divide exist across identical retail store formats?
+              </div>
+              <div class="callout-box teal">
+                <strong>Methodology Mandate:</strong> 100% empirical derivation from transaction records. Zero fabricated estimates, zero placeholder assumptions, and rigorous separation of correlation versus causation.
+              </div>
+            </div>
+
+            <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="card-title-sm">The 5 Core Business Questions Addressed</div>
+              
+              <div style="display:flex; gap:14px; align-items:flex-start;">
+                <span class="badge badge-blue">Q1</span>
+                <div style="font-size:14px; line-height:1.5;">
+                  <strong>Category Profitability Dynamics:</strong> Which product lines drive revenue versus bottom-line profit, and where are margins structurally vulnerable?
+                </div>
+              </div>
+
+              <div style="display:flex; gap:14px; align-items:flex-start;">
+                <span class="badge badge-teal">Q2</span>
+                <div style="font-size:14px; line-height:1.5;">
+                  <strong>Weekend vs Weekday Seasonality:</strong> Does the retail dogma of "weekend surge" hold true, or does daily velocity dictate a flat operational model?
+                </div>
+              </div>
+
+              <div style="display:flex; gap:14px; align-items:flex-start;">
+                <span class="badge badge-amber">Q3</span>
+                <div style="font-size:14px; line-height:1.5;">
+                  <strong>Discounting Elasticity & Margin Destruction:</strong> What is the mathematical price elasticity of demand? Does higher discounting expand transaction basket size?
+                </div>
+              </div>
+
+              <div style="display:flex; gap:14px; align-items:flex-start;">
+                <span class="badge badge-rose">Q4</span>
+                <div style="font-size:14px; line-height:1.5;">
+                  <strong>Store Network Benchmarking:</strong> Which stores occupy the Stars vs Laggards quadrants, and what measurable operational root causes explain underperformance?
+                </div>
+              </div>
+
+              <div style="display:flex; gap:14px; align-items:flex-start;">
+                <span class="badge badge-emerald">Q5</span>
+                <div style="font-size:14px; line-height:1.5;">
+                  <strong>Customer & Payment Channel Value:</strong> How do customer identification status and digital vs cash payment modes influence basket value and margin capture?
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 3: Dataset Architecture & Characteristics
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-3">
+        <div class="slide-header">
+          <div class="slide-subtitle">02 / Data Engineering & Governance</div>
+          <h2 class="slide-title">Dataset Architecture & Schema Profile</h2>
+          <p class="slide-desc">Granular examination of the 1,500 raw transaction records spanning 50 stores and 24 continuous calendar months.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1fr 1.3fr;">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="card">
+                <div class="card-title-sm">Dataset Dimensions & Scope</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px;">
+                  <div>
+                    <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Total Invoices</div>
+                    <div style="font-size:26px; font-weight:900; color:var(--slate-900);">1,500</div>
+                  </div>
+                  <div>
+                    <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Attributes</div>
+                    <div style="font-size:26px; font-weight:900; color:var(--slate-900);">11 Raw + 7 Calc</div>
+                  </div>
+                  <div>
+                    <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Store Locations</div>
+                    <div style="font-size:26px; font-weight:900; color:var(--slate-900);">50 Stores</div>
+                  </div>
+                  <div>
+                    <div style="font-size:12px; color:var(--slate-500); text-transform:uppercase; font-weight:700;">Observation Window</div>
+                    <div style="font-size:15px; font-weight:800; color:var(--slate-900); margin-top:6px;">18-Nov-24 to 18-Nov-26</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card callout-box" style="margin-top:0;">
+                <div style="font-weight:800; color:var(--slate-900); margin-bottom:6px; font-size:15px;">Crucial Governance Note: Orders vs Customers</div>
+                <p style="font-size:14px; color:var(--slate-700); line-height:1.6;">
+                  The dataset records <strong>1,500 unique transaction invoices</strong>. It does not provide permanent customer IDs or customer phone numbers. Transaction labels (<code>New</code>, <code>Returning</code>, <code>Unknown</code>) represent checkout POS classifications. Analytical conclusions explicitly avoid assuming 1,500 unique individuals or calculating cohort retention/LTV.
+                </p>
+              </div>
+            </div>
+
+            <div class="card" style="overflow-y:auto; max-height:420px;">
+              <div class="card-title-sm">Raw Field Dictionary & Physical Schema</div>
+              <table class="styled-table" style="margin-top:10px;">
+                <thead>
+                  <tr>
+                    <th>Field Name</th>
+                    <th>Data Type</th>
+                    <th>Domain / Range</th>
+                    <th>Analytical Function</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>InvoiceNo</code></td>
+                    <td>String</td>
+                    <td>INV00001 - INV01500</td>
+                    <td>Transaction Primary Key (1,500 unique)</td>
+                  </tr>
+                  <tr>
+                    <td><code>Date</code></td>
+                    <td>Date (ISO)</td>
+                    <td>2024-11-18 – 2026-11-18</td>
+                    <td>Temporal dimension, seasonality & DOW</td>
+                  </tr>
+                  <tr>
+                    <td><code>StoreID</code></td>
+                    <td>String</td>
+                    <td>Store_01 – Store_50</td>
+                    <td>Store network performance & benchmarking</td>
+                  </tr>
+                  <tr>
+                    <td><code>ProductID</code></td>
+                    <td>String</td>
+                    <td>CLO-*, SHO-*, ACC-*</td>
+                    <td>Granular product identification</td>
+                  </tr>
+                  <tr>
+                    <td><code>Category</code></td>
+                    <td>Categorical</td>
+                    <td>Clothing, Shoes, Accessories</td>
+                    <td>Product line segmentation</td>
+                  </tr>
+                  <tr>
+                    <td><code>Quantity</code></td>
+                    <td>Integer</td>
+                    <td>1 to 5 units (Mean 2.12)</td>
+                    <td>Transaction volume & basket sizing</td>
+                  </tr>
+                  <tr>
+                    <td><code>UnitPrice</code></td>
+                    <td>Float (₹)</td>
+                    <td>₹199.00 to ₹3,499.00</td>
+                    <td>List catalog price point (Mean ₹1,193)</td>
+                  </tr>
+                  <tr>
+                    <td><code>Discount</code></td>
+                    <td>Float (%)</td>
+                    <td>0.0% to 30.0% (Mean 8.25%)</td>
+                    <td>Promotional markdown percentage</td>
+                  </tr>
+                  <tr>
+                    <td><code>CostPerUnit</code></td>
+                    <td>Float (₹)</td>
+                    <td>₹99.65 to ₹2,435.27</td>
+                    <td>Wholesale procurement cost (COGS)</td>
+                  </tr>
+                  <tr>
+                    <td><code>CustomerType</code></td>
+                    <td>Categorical</td>
+                    <td>New (672), Returning (672), Unknown (156)</td>
+                    <td>POS customer profile classification</td>
+                  </tr>
+                  <tr>
+                    <td><code>PaymentMode</code></td>
+                    <td>Categorical</td>
+                    <td>Card (603), Cash (471), Digital (360), Unknown (66)</td>
+                    <td>Payment settlement method</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 4: Data Cleaning & Preparation
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-4">
+        <div class="slide-header">
+          <div class="slide-subtitle">03 / Data Hygiene & Transformation</div>
+          <h2 class="slide-title">Data Cleaning Audit & Calculated Dimensions</h2>
+          <p class="slide-desc">Rigorous data health verification and mathematical definitions for all commercial metrics.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid">
+            <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="card-title-sm">Data Hygiene & Validation Audit</div>
+              
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--emerald-soft); border-radius:var(--radius-sm);">
+                <span style="font-size:14px; font-weight:800; color:var(--emerald-accent);">Missing Values (Nulls / NaNs)</span>
+                <span style="font-size:14px; font-weight:800; color:var(--emerald-accent);">0 (100% Clean)</span>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--emerald-soft); border-radius:var(--radius-sm);">
+                <span style="font-size:14px; font-weight:800; color:var(--emerald-accent);">Duplicate Invoices</span>
+                <span style="font-size:14px; font-weight:800; color:var(--emerald-accent);">0 Duplicates Found</span>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--blue-soft); border-radius:var(--radius-sm);">
+                <span style="font-size:14px; font-weight:800; color:var(--blue-primary);">Price / Cost Consistency</span>
+                <span style="font-size:14px; font-weight:800; color:var(--blue-primary);">100% UnitPrice > CostPerUnit</span>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--amber-soft); border-radius:var(--radius-sm);">
+                <span style="font-size:14px; font-weight:800; color:var(--amber-accent);">POS Capture Gaps (Unknowns)</span>
+                <span style="font-size:14px; font-weight:800; color:var(--amber-accent);">156 Cust (10.4%) / 66 Pay (4.4%)</span>
+              </div>
+
+              <div style="font-size:14px; color:var(--slate-700); line-height:1.6; margin-top:4px;">
+                <strong>Handling Unknowns:</strong> Rather than imputing or dropping records, <code>Unknown</code> classifications were retained as explicit analytical categories. They represent critical operational leakage points in store checkout execution.
+              </div>
+            </div>
+
+            <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+              <div class="card-title-sm">Calculated Metrics & Business Logic</div>
+
+              <div style="background:var(--slate-50); padding:10px 14px; border-radius:var(--radius-sm); border-left:4px solid var(--blue-primary); font-size:13px;">
+                <strong>Gross Sales</strong> = <code>Quantity × UnitPrice</code>
+                <div style="color:var(--slate-600); margin-top:2px;">Total across dataset: <strong>₹38,55,724.00</strong></div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:10px 14px; border-radius:var(--radius-sm); border-left:4px solid var(--amber-light); font-size:13px;">
+                <strong>Discount Amount</strong> = <code>Gross Sales × (Discount / 100)</code>
+                <div style="color:var(--slate-600); margin-top:2px;">Total markdown given: <strong>₹3,13,493.50 (8.13% of gross)</strong></div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:10px 14px; border-radius:var(--radius-sm); border-left:4px solid var(--teal-light); font-size:13px;">
+                <strong>Net Revenue</strong> = <code>Gross Sales - Discount Amount</code>
+                <div style="color:var(--slate-600); margin-top:2px;">Effective recognized revenue: <strong>₹35,42,230.50</strong></div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:10px 14px; border-radius:var(--radius-sm); border-left:4px solid var(--slate-600); font-size:13px;">
+                <strong>Total COGS</strong> = <code>Quantity × CostPerUnit</code>
+                <div style="color:var(--slate-600); margin-top:2px;">Procurement cost: <strong>₹23,10,254.59 (65.22% of net)</strong></div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:10px 14px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald-light); font-size:13px;">
+                <strong>Profit & Margin %</strong> = <code>Net Revenue - Total Cost</code> | <code>(Profit / Net Rev) × 100</code>
+                <div style="color:var(--slate-600); margin-top:2px;">Net Operating Profit: <strong>₹12,31,975.91 (34.78% Margin)</strong></div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:4px;">
+                <div style="background:var(--slate-100); padding:8px 12px; border-radius:4px; font-size:12px;">
+                  <strong>Day Classification:</strong> Weekend (Sat, Sun) vs Weekday (Mon–Fri)
+                </div>
+                <div style="background:var(--slate-100); padding:8px 12px; border-radius:4px; font-size:12px;">
+                  <strong>Discount Bands:</strong> None (0%), Low (1-5%), Med (6-15%), High (16-30%)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 5: Executive KPI Scorecard
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-5">
+        <div class="slide-header">
+          <div class="slide-subtitle">04 / Performance Scorecard</div>
+          <h2 class="slide-title">Executive Retail KPI Scorecard</h2>
+          <p class="slide-desc">Network-level commercial metrics across sales, profitability, store averages, and channel velocity.</p>
+        </div>
+
+        <div class="slide-body">
+          <!-- Top Row KPIs -->
+          <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="kpi-card">
+              <span class="kpi-label">Total Gross Sales</span>
+              <span class="kpi-value">₹38.56L</span>
+              <span class="kpi-subtext">Before promotional discounts</span>
+            </div>
+            <div class="kpi-card teal">
+              <span class="kpi-label">Total Net Revenue</span>
+              <span class="kpi-value">₹35.42L</span>
+              <span class="kpi-subtext">₹70,845 per store avg</span>
+            </div>
+            <div class="kpi-card emerald">
+              <span class="kpi-label">Operating Profit</span>
+              <span class="kpi-value">₹12.32L</span>
+              <span class="kpi-subtext"><strong>34.78%</strong> Overall Margin</span>
+            </div>
+            <div class="kpi-card amber">
+              <span class="kpi-label">Discount Markdown</span>
+              <span class="kpi-value">₹3.13L</span>
+              <span class="kpi-subtext">8.25% Mean Discount rate</span>
+            </div>
+            <div class="kpi-card rose">
+              <span class="kpi-label">Total Procurement Cost</span>
+              <span class="kpi-value">₹23.10L</span>
+              <span class="kpi-subtext">65.22% COGS-to-Revenue</span>
+            </div>
+          </div>
+
+          <!-- Bottom Row KPIs -->
+          <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="kpi-card">
+              <span class="kpi-label">Transaction Orders</span>
+              <span class="kpi-value">1,500</span>
+              <span class="kpi-subtext">30 orders / store median</span>
+            </div>
+            <div class="kpi-card teal">
+              <span class="kpi-label">Total Units Sold</span>
+              <span class="kpi-value">3,176</span>
+              <span class="kpi-subtext">2.12 units / transaction</span>
+            </div>
+            <div class="kpi-card emerald">
+              <span class="kpi-label">Average Order Value (AOV)</span>
+              <span class="kpi-value">₹2,361</span>
+              <span class="kpi-subtext">Median basket: ₹1,598</span>
+            </div>
+            <div class="kpi-card amber">
+              <span class="kpi-label">Average Selling Price (ASP)</span>
+              <span class="kpi-value">₹1,115</span>
+              <span class="kpi-subtext">Net realized price per unit</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Store Network</span>
+              <span class="kpi-value">50</span>
+              <span class="kpi-subtext">100% active locations</span>
+            </div>
+          </div>
+
+          <!-- Bottom Summary Highlights Grid -->
+          <div class="three-col-grid">
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--blue-primary);">Customer Split</div>
+              <div style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>New:</strong> 672 orders (44.8%), ₹16.36L Rev (34.28% margin)<br/>
+                • <strong>Returning:</strong> 672 orders (44.8%), ₹15.29L Rev (34.83% margin)<br/>
+                • <strong>Unknown:</strong> 156 orders (10.4%), ₹3.77L Rev (36.76% margin)
+              </div>
+            </div>
+
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--teal-accent);">Temporal Contribution</div>
+              <div style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>Weekday (Mon-Fri):</strong> ₹25.24L (71.26% share), 1,080 orders<br/>
+                • <strong>Weekend (Sat-Sun):</strong> ₹10.18L (28.74% share), 420 orders<br/>
+                • <strong>Daily Velocity:</strong> Flat 14.3% per day across all 7 days
+              </div>
+            </div>
+
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--emerald-accent);">Payment Channel Health</div>
+              <div style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>Card:</strong> ₹13.92L (603 orders, AOV ₹2,309)<br/>
+                • <strong>Cash:</strong> ₹11.12L (471 orders, AOV ₹2,362)<br/>
+                • <strong>Digital (UPI):</strong> ₹8.95L (360 orders, <strong>Highest AOV ₹2,486</strong>)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 6: Exploratory Data Analysis & Statistical Distributions
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-6">
+        <div class="slide-header">
+          <div class="slide-subtitle">05 / Statistical Discovery</div>
+          <h2 class="slide-title">Exploratory Data Analysis & Statistical Distributions</h2>
+          <p class="slide-desc">Comprehensive parametric and non-parametric distribution profiles across core numerical variables.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.25fr 1fr;">
+            <div class="card" style="overflow-y:auto;">
+              <div class="card-title-sm">Summary Statistics Benchmark Matrix</div>
+              <table class="styled-table" style="margin-top:8px;">
+                <thead>
+                  <tr>
+                    <th>Variable</th>
+                    <th>Min</th>
+                    <th>Q25</th>
+                    <th>Median</th>
+                    <th>Mean</th>
+                    <th>Q75</th>
+                    <th>Max</th>
+                    <th>Std Dev</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Quantity</strong></td>
+                    <td>1</td>
+                    <td>1.0</td>
+                    <td>2.0</td>
+                    <td>2.12</td>
+                    <td>3.0</td>
+                    <td>5</td>
+                    <td>1.14</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Unit Price (₹)</strong></td>
+                    <td>₹199</td>
+                    <td>₹499</td>
+                    <td>₹799</td>
+                    <td>₹1,193</td>
+                    <td>₹1,999</td>
+                    <td>₹3,499</td>
+                    <td>₹860</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Cost / Unit (₹)</strong></td>
+                    <td>₹99.7</td>
+                    <td>₹299.1</td>
+                    <td>₹542.6</td>
+                    <td>₹715.7</td>
+                    <td>₹1,041</td>
+                    <td>₹2,435</td>
+                    <td>₹523.7</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Discount (%)</strong></td>
+                    <td>0.0%</td>
+                    <td>0.0%</td>
+                    <td>5.0%</td>
+                    <td>8.25%</td>
+                    <td>15.0%</td>
+                    <td>30.0%</td>
+                    <td>9.05%</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Net Revenue (₹)</strong></td>
+                    <td>₹139.3</td>
+                    <td>₹759.1</td>
+                    <td>₹1,598</td>
+                    <td>₹2,361</td>
+                    <td>₹3,196</td>
+                    <td>₹17,495</td>
+                    <td>₹2,379</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Profit (₹)</strong></td>
+                    <td>₹1.11</td>
+                    <td>₹226.2</td>
+                    <td>₹503.8</td>
+                    <td>₹821.3</td>
+                    <td>₹1,082</td>
+                    <td>₹7,828</td>
+                    <td>₹912.0</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Profit Margin (%)</strong></td>
+                    <td>0.06%</td>
+                    <td>28.65%</td>
+                    <td>35.32%</td>
+                    <td>34.09%</td>
+                    <td>41.31%</td>
+                    <td>50.0%</td>
+                    <td>9.67%</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="callout-box teal" style="margin-top:12px;">
+                <strong>Statistical Insight:</strong> The significant delta between Median Net Revenue (₹1,598) and Mean Net Revenue (₹2,361) demonstrates strong positive (right) skewness driven by high-ticket footwear transactions.
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="chart-card">
+                <div class="card-header-sm">
+                  <span class="card-title-sm">Quantity Distribution (Units Sold per Order)</span>
+                  <span class="badge badge-blue">Mode: 1 Unit</span>
+                </div>
+                <div class="chart-canvas-wrapper" style="height:140px;">
+                  <canvas id="chart-slide6-qty-dist" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="card-header-sm">
+                  <span class="card-title-sm">Discount Band Frequency</span>
+                  <span class="badge badge-teal">41.4% Zero Discount</span>
+                </div>
+                <div class="chart-canvas-wrapper" style="height:140px;">
+                  <canvas id="chart-slide6-disc-dist" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 7: Product Category Performance & Profitability Dynamics
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-7">
+        <div class="slide-header">
+          <div class="slide-subtitle">06 / Category Economics</div>
+          <h2 class="slide-title">Product Category & Profitability Dynamics</h2>
+          <p class="slide-desc">Evaluating volume, revenue contribution, margin health, and ticket sizes across Clothing, Shoes, and Accessories.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.25fr 1fr;">
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Net Revenue & Profit by Product Line</span>
+                <span class="badge badge-blue">INR (₹)</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide7-rev-profit" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Category Revenue Contribution</span>
+                <span class="badge badge-teal">Share of ₹35.42L</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide7-category-donut" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Breakdown Table - Perfectly Placed Below with Zero Overlap -->
+          <div class="card" style="padding:14px 18px;">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Orders</th>
+                  <th>Units Sold</th>
+                  <th>Net Revenue</th>
+                  <th>Total Cost</th>
+                  <th>Operating Profit</th>
+                  <th>Profit Margin</th>
+                  <th>AOV</th>
+                  <th>Unit ASP</th>
+                  <th>Strategic Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Clothing</strong></td>
+                  <td>739 (49.3%)</td>
+                  <td>1,587 (50.0%)</td>
+                  <td><strong>₹17,21,166 (48.6%)</strong></td>
+                  <td>₹11,27,374</td>
+                  <td><strong>₹5,93,792 (48.2%)</strong></td>
+                  <td>34.50%</td>
+                  <td>₹2,329</td>
+                  <td>₹1,085</td>
+                  <td><span class="badge badge-blue">Volume Anchor</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Shoes</strong></td>
+                  <td>295 (19.7%)</td>
+                  <td>641 (20.2%)</td>
+                  <td><strong>₹14,28,233 (40.3%)</strong></td>
+                  <td>₹9,28,535</td>
+                  <td><strong>₹4,99,699 (40.6%)</strong></td>
+                  <td>34.99%</td>
+                  <td><strong>₹4,841</strong></td>
+                  <td><strong>₹2,228</strong></td>
+                  <td><span class="badge badge-amber">AOV Multiplier</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Accessories</strong></td>
+                  <td>466 (31.1%)</td>
+                  <td>948 (29.8%)</td>
+                  <td><strong>₹3,92,831 (11.1%)</strong></td>
+                  <td>₹2,54,346</td>
+                  <td><strong>₹1,38,485 (11.2%)</strong></td>
+                  <td><strong>35.25%</strong></td>
+                  <td>₹843</td>
+                  <td>₹414</td>
+                  <td><span class="badge badge-emerald">Highest Margin</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 8: Weekend vs Weekday Retail Dynamics (ZERO OVERLAP FIXED)
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-8">
+        <div class="slide-header">
+          <div class="slide-subtitle">07 / Temporal Seasonality</div>
+          <h2 class="slide-title">Weekend vs Weekday Retail Dynamics</h2>
+          <p class="slide-desc">Data-driven hypothesis testing: Debunking the retail myth of a weekend sales surge.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.25fr 1fr;">
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Daily Net Revenue Trend (Monday – Sunday)</span>
+                <span class="badge badge-blue">Peak: Friday ₹5.66L</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide8-daily-rev" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Transaction Volume by Day of Week</span>
+                <span class="badge badge-teal">Peak: Friday 244 Orders</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide8-daily-orders" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empirical Hypothesis Comparison Cards - Cleanly Stacked Below -->
+          <div class="three-col-grid">
+            <div class="card callout-box amber" style="margin:0;">
+              <strong style="color:var(--amber-accent); font-size:15px;">The Conventional Retail Hypothesis:</strong>
+              <div style="font-size:14px; margin-top:6px; line-height:1.55;">
+                "Retail sales surge heavily on Saturdays and Sundays due to consumer leisure footfall; stores should allocate 40–50% of weekly staff to weekends."
+              </div>
+            </div>
+
+            <div class="card callout-box teal" style="margin:0;">
+              <strong style="color:var(--teal-accent); font-size:15px;">Empirical Data Finding:</strong>
+              <div style="font-size:14px; margin-top:6px; line-height:1.55;">
+                <strong>Debunked.</strong> Weekends represent 28.57% of days and generate <strong>28.74% of revenue (₹10.18L)</strong> and 28.0% of orders (420). Velocity is completely flat at 14.3% per day!
+              </div>
+            </div>
+
+            <div class="card callout-box" style="margin:0;">
+              <strong style="color:var(--blue-primary); font-size:15px;">Operational Strategic Mandate:</strong>
+              <div style="font-size:14px; margin-top:6px; line-height:1.55;">
+                <strong>Friday is the #1 sales day</strong> (₹5.66L, 244 orders) followed closely by <strong>Monday</strong> (₹5.57L, 226 orders). Reallocate staffing and promos toward Monday and Friday.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 9: Discount Impact & Price Elasticity Analysis (ZERO OVERLAP FIXED)
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-9">
+        <div class="slide-header">
+          <div class="slide-subtitle">08 / Pricing Diagnostics</div>
+          <h2 class="slide-title">Discount Impact & Margin Elasticity Analysis</h2>
+          <p class="slide-desc">Quantifying promotional price elasticity: Proving the absence of volume uplift and severe profit margin degradation.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.15fr 1fr;">
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Revenue & Profit by Discount Band</span>
+                <span class="badge badge-rose">High Discount Crushes Profit</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide9-bands-margin" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Discount % vs Profit Margin % Scatter Plot</span>
+                <span class="badge badge-amber">r = -0.7447 (Trendline: y = -0.80x + 40.7%)</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide9-scatter" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deep Diagnostic Grid - Cleanly Stacked Below -->
+          <div class="four-col-grid">
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px; font-weight:800; color:var(--emerald-accent);">NO DISCOUNT (0%)</div>
+              <div style="font-size:22px; font-weight:900; color:var(--slate-900); margin:4px 0;">40.21% Margin</div>
+              <div style="font-size:13px; color:var(--slate-700); line-height:1.5;">621 orders • ₹16.66L Rev<br/><strong>AOV ₹2,683 • 2.13 units/order</strong></div>
+            </div>
+
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px; font-weight:800; color:var(--blue-primary);">LOW DISCOUNT (1–5%)</div>
+              <div style="font-size:22px; font-weight:900; color:var(--slate-900); margin:4px 0;">36.47% Margin</div>
+              <div style="font-size:13px; color:var(--slate-700); line-height:1.5;">211 orders • ₹5.08L Rev<br/><strong>AOV ₹2,407 • 2.10 units/order</strong></div>
+            </div>
+
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px; font-weight:800; color:var(--amber-accent);">MED DISCOUNT (6–15%)</div>
+              <div style="font-size:22px; font-weight:900; color:var(--slate-900); margin:4px 0;">32.06% Margin</div>
+              <div style="font-size:13px; color:var(--slate-700); line-height:1.5;">377 orders • ₹7.81L Rev<br/><strong>AOV ₹2,071 • 2.11 units/order</strong></div>
+            </div>
+
+            <div class="card" style="padding:14px 16px; background:rgba(239,68,68,0.05); border-color:#FECACA;">
+              <div style="font-size:12px; font-weight:800; color:var(--rose-accent);">HIGH DISCOUNT (16–30%)</div>
+              <div style="font-size:22px; font-weight:900; color:var(--rose-accent); margin:4px 0;">21.54% Margin</div>
+              <div style="font-size:13px; color:var(--slate-700); line-height:1.5;">291 orders • ₹5.87L Rev<br/><strong>AOV ₹2,018 • 2.11 units/order</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 10: Store Network Benchmark & Rankings
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-10">
+        <div class="slide-header">
+          <div class="slide-subtitle">09 / Retail Network Benchmarking</div>
+          <h2 class="slide-title">Store Network Benchmark & Rankings</h2>
+          <p class="slide-desc">Diagnosing the 7.1x performance divide across 50 stores using median thresholds for Revenue and Margin.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.15fr 1fr;">
+            <!-- Top / Bottom Store Charts -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="chart-card">
+                <div class="card-header-sm">
+                  <span class="card-title-sm">Top 5 Stores by Net Revenue</span>
+                  <span class="badge badge-emerald">Leader: Store_16 (₹1.23L)</span>
+                </div>
+                <div class="chart-canvas-wrapper" style="height:140px;">
+                  <canvas id="chart-slide10-top-stores" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="card-header-sm">
+                  <span class="card-title-sm">Bottom 5 Stores by Net Revenue</span>
+                  <span class="badge badge-rose">Laggard: Store_25 (₹17.1K)</span>
+                </div>
+                <div class="chart-canvas-wrapper" style="height:140px;">
+                  <canvas id="chart-slide10-bottom-stores" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4-Quadrant Performance Matrix Overview -->
+            <div class="card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">50-Store Network Quad-Split</span>
+                <span class="badge badge-blue">Medians: ₹73.1K Rev | 35.0% Margin</span>
+              </div>
+
+              <div class="matrix-container" style="margin-top:6px;">
+                <div class="matrix-quadrant q1">
+                  <div class="quadrant-title" style="color:var(--emerald-accent);">
+                    <span>⭐ Stars (High Rev, High Margin)</span>
+                    <span>12 Stores</span>
+                  </div>
+                  <div class="quadrant-stores-list">
+                    Store_16, Store_15, Store_21, Store_47, Store_32, Store_03, Store_24, Store_12, Store_48, Store_37, Store_27, Store_35.
+                  </div>
+                </div>
+
+                <div class="matrix-quadrant q2">
+                  <div class="quadrant-title" style="color:var(--blue-primary);">
+                    <span>⚙️ Volume Drivers (High Rev, Low Margin)</span>
+                    <span>13 Stores</span>
+                  </div>
+                  <div class="quadrant-stores-list">
+                    Store_26, Store_31, Store_14, Store_02, Store_44, Store_22, Store_39, Store_06, Store_42, Store_11, Store_34, Store_20, Store_36.
+                  </div>
+                </div>
+
+                <div class="matrix-quadrant q3">
+                  <div class="quadrant-title" style="color:var(--amber-accent);">
+                    <span>💎 Boutiques (Low Rev, High Margin)</span>
+                    <span>13 Stores</span>
+                  </div>
+                  <div class="quadrant-stores-list">
+                    Store_25, Store_40, Store_08, Store_10, Store_13, Store_23, Store_28, Store_29, Store_33, Store_38, Store_45, Store_01, Store_05.
+                  </div>
+                </div>
+
+                <div class="matrix-quadrant q4">
+                  <div class="quadrant-title" style="color:var(--rose-accent);">
+                    <span>⚠️ Laggards (Low Rev, Low Margin)</span>
+                    <span>12 Stores</span>
+                  </div>
+                  <div class="quadrant-stores-list">
+                    Store_04, Store_07, Store_09, Store_17, Store_18, Store_19, Store_30, Store_41, Store_43, Store_46, Store_49, Store_50.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 11: Store Performance Matrix – Identifying Business Opportunities
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-11">
+        <div class="slide-header">
+          <div class="slide-subtitle">09b / Strategic Store Matrix</div>
+          <h2 class="slide-title">Store Performance Matrix – Identifying Business Opportunities</h2>
+          <p class="slide-desc">Dynamic 2×2 matrix classifying 50 stores using median benchmarks (Revenue ₹73.1K, Profit ₹24.4K) to unlock targeted profit expansion.</p>
+        </div>
+
+        <div class="slide-body">
+          <!-- 4 Dynamic Classification KPI Cards -->
+          <div class="matrix-kpi-grid">
+            <div class="matrix-kpi-card strong">
+              <div class="matrix-kpi-title" style="color:var(--emerald-accent);">
+                <span>⭐ Strong Performers</span>
+                <span class="badge-matrix badge-matrix-strong">46.0% Network</span>
+              </div>
+              <div class="matrix-kpi-val" style="color:var(--emerald-accent);">23 Stores</div>
+              <div class="matrix-kpi-sub">Avg Rev: ₹86.6K • Avg Profit: ₹30.3K (35.0% Margin)</div>
+            </div>
+
+            <div class="matrix-kpi-card margin">
+              <div class="matrix-kpi-title" style="color:var(--amber-accent);">
+                <span>⚠️ Margin Problems</span>
+                <span class="badge-matrix badge-matrix-margin">4.0% Network</span>
+              </div>
+              <div class="matrix-kpi-val" style="color:var(--amber-accent);">2 Stores</div>
+              <div class="matrix-kpi-sub">Avg Rev: ₹73.6K • Avg Profit: ₹23.9K (32.6% Margin)</div>
+            </div>
+
+            <div class="matrix-kpi-card growth">
+              <div class="matrix-kpi-title" style="color:var(--blue-primary);">
+                <span>💎 Growth Opportunities</span>
+                <span class="badge-matrix badge-matrix-growth">4.0% Network</span>
+              </div>
+              <div class="matrix-kpi-val" style="color:var(--blue-primary);">2 Stores</div>
+              <div class="matrix-kpi-sub">Avg Rev: ₹70.3K • Avg Profit: ₹25.1K (35.7% Margin)</div>
+            </div>
+
+            <div class="matrix-kpi-card investigate">
+              <div class="matrix-kpi-title" style="color:var(--rose-accent);">
+                <span>🔍 Needs Investigation</span>
+                <span class="badge-matrix badge-matrix-investigate">46.0% Network</span>
+              </div>
+              <div class="matrix-kpi-val" style="color:var(--rose-accent);">23 Stores</div>
+              <div class="matrix-kpi-sub">Avg Rev: ₹54.9K • Avg Profit: ₹19.0K (34.6% Margin)</div>
+            </div>
+          </div>
+
+          <!-- Main 2-Column Analytical Layout -->
+          <div class="two-col-grid" style="grid-template-columns: 1.25fr 1fr;">
+            <!-- Left: Interactive 2x2 Scatter Matrix Canvas -->
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">50-Store 2×2 Revenue vs Profit Scatter Matrix</span>
+                <span class="badge badge-blue">Medians: ₹73.1K Rev | ₹24.4K Profit</span>
+              </div>
+              <div class="chart-canvas-wrapper" style="height:310px;">
+                <canvas id="chart-slide11-matrix" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Right: 4 Quadrant Opportunities & Actions Narrative Cards -->
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="matrix-narrative-card strong">
+                <div class="card-head" style="color:var(--emerald-accent);">
+                  <span>⭐ Strong Performers (23 Stores)</span>
+                  <span style="font-size:12px; font-weight:700;">₹19.93L Rev (56.3%)</span>
+                </div>
+                <div class="store-pills">
+                  <strong>Stores:</strong> Store_16 (₹1.23L), Store_15 (₹1.03L), Store_21, Store_47, Store_32, Store_03, Store_27, Store_37, Store_48, Store_14, Store_31, +12 more.
+                </div>
+                <div class="action-box">
+                  <strong>Action:</strong> Benchmark operational playbooks. Standardize visual merchandising, checkout upselling, and inventory replenishment as models for the network.
+                </div>
+              </div>
+
+              <div class="matrix-narrative-card margin">
+                <div class="card-head" style="color:var(--amber-accent);">
+                  <span>⚠️ Margin Problems (2 Stores)</span>
+                  <span style="font-size:12px; font-weight:700;">₹1.47L Rev • 32.55% Margin</span>
+                </div>
+                <div class="store-pills">
+                  <strong>Stores:</strong> <strong>Store_20</strong> (₹73.6K Rev, ₹23.7K Profit) & <strong>Store_33</strong> (₹73.6K Rev, ₹24.2K Profit).
+                </div>
+                <div class="action-box">
+                  <strong>Action:</strong> Audit promotional overrides. Enforce strict 10% discount caps on high-velocity SKUs and shift floor display mix toward higher-margin Accessories.
+                </div>
+              </div>
+
+              <div class="matrix-narrative-card growth">
+                <div class="card-head" style="color:var(--blue-primary);">
+                  <span>💎 Growth Opportunities (2 Stores)</span>
+                  <span style="font-size:12px; font-weight:700;">₹1.41L Rev • 35.72% Margin</span>
+                </div>
+                <div class="store-pills">
+                  <strong>Stores:</strong> <strong>Store_24</strong> (₹71.9K Rev, ₹25.5K Profit) & <strong>Store_29</strong> (₹68.7K Rev, ₹24.7K Profit).
+                </div>
+                <div class="action-box">
+                  <strong>Action:</strong> Drive footfall expansion. Prime candidates for targeted local digital campaigns, extended weekend hours, and click-and-collect inventory routing.
+                </div>
+              </div>
+
+              <div class="matrix-narrative-card investigate">
+                <div class="card-head" style="color:var(--rose-accent);">
+                  <span>🔍 Needs Investigation (23 Stores)</span>
+                  <span style="font-size:12px; font-weight:700;">₹12.62L Rev • 34.58% Margin</span>
+                </div>
+                <div class="store-pills">
+                  <strong>Stores:</strong> Store_25 (₹17.1K), Store_40 (₹28.4K), Store_08 (₹36.0K), Store_10, Store_04, Store_17, Store_43, Store_50, +15 more.
+                </div>
+                <div class="action-box">
+                  <strong>Action:</strong> Launch 90-day turnaround reviews. Address 36% transaction volume deficit via local catchment marketing; assess lease restructuring or store consolidation.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 12: Customer Segmentation & Channel Monetization
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-12">
+        <div class="slide-header">
+          <div class="slide-subtitle">10 / Customer & Tender Analytics</div>
+          <h2 class="slide-title">Customer Segmentation & Channel Monetization</h2>
+          <p class="slide-desc">Analyzing customer acquisition profile, POS capture gaps, and payment mode ticket sizes.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Revenue Share by Customer Classification</span>
+                <span class="badge badge-blue">New vs Returning Split</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide12-customer-donut" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="card-header-sm">
+                <span class="card-title-sm">Average Order Value (AOV) by Payment Mode</span>
+                <span class="badge badge-teal">Digital Leads with ₹2,486</span>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-slide12-payment-aov" class="interactive-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Basket Tiers & Data Leakage Summary - Cleanly Stacked Below -->
+          <div class="three-col-grid">
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--blue-primary);">Customer Equality Discovery</div>
+              <p style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>New Customers:</strong> 672 orders (44.8%), ₹16.36L Rev, AOV ₹2,434.<br/>
+                • <strong>Returning Customers:</strong> 672 orders (44.8%), ₹15.29L Rev, AOV ₹2,276.<br/>
+                Identical 50/50 order volume demonstrates steady top-of-funnel customer traffic.
+              </p>
+            </div>
+
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--amber-accent);">The "Unknown" Capture Gap</div>
+              <p style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>156 Transactions (10.4%)</strong> have Unknown Customer Type.<br/>
+                • Generates <strong>₹3.77L in revenue</strong> with high margin (36.76%).<br/>
+                Represents un-enrolled high-value spenders slipping through POS checkouts.
+              </p>
+            </div>
+
+            <div class="card" style="padding:14px 18px;">
+              <div class="card-title-sm" style="color:var(--emerald-accent);">Basket Value Concentration</div>
+              <p style="font-size:14px; color:var(--slate-800); line-height:1.6; margin-top:6px;">
+                • <strong>High Baskets (> ₹3,196):</strong> Top 25% of orders drive <strong>55.9% of total revenue</strong> (₹19.80L).<br/>
+                • <strong>Low Baskets (< ₹759):</strong> Bottom 25% account for only 4.9% of revenue.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 13: Hidden Insights & Anomaly Detection
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-13">
+        <div class="slide-header">
+          <div class="slide-subtitle">11 / Analytical Intelligence</div>
+          <h2 class="slide-title">Hidden Insights & Anomaly Detection</h2>
+          <p class="slide-desc">High-impact, non-obvious business discoveries derived through deep cross-tabulation and econometric correlation.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="gap:16px;">
+
+            <!-- Insight 1 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #1</span>
+                <span class="badge badge-rose">Zero Volume Elasticity</span>
+              </div>
+              <div class="insight-title">The Discount Margin Destruction Trap</div>
+              <div class="insight-step"><strong>Observation:</strong> Correlation between Discount % and Quantity is <code>r = -0.0034</code>. Units/order on High Discount (2.11) equals No Discount (2.13), while Margin collapses from 40.21% down to 21.54%.</div>
+              <div class="insight-step"><strong>Interpretation:</strong> Price elasticity of demand is zero regarding basket size. High markdowns subsidize pre-existing intent without driving incremental basket expansion.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> High discounts surrendered ₹1.80L in markdowns, delivering only ₹1.26L profit. Capping markdowns recovers ~₹85,000–₹1,00,000 in pure gross margin.</div>
+              <div class="insight-step"><strong>Action:</strong> Eliminate unconditioned 16–30% discounts. Require a minimum 3-item bundle or basket value threshold (₹3,500+) to unlock promotions.</div>
+            </div>
+
+            <!-- Insight 2 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #2</span>
+                <span class="badge badge-blue">Temporal Parity</span>
+              </div>
+              <div class="insight-title">Debunking the Weekend Retail Rush Dogma</div>
+              <div class="insight-step"><strong>Observation:</strong> Weekends generate 28.74% of revenue across 28.57% of calendar days. Friday (₹5.66L, 244 orders) and Monday (₹5.57L, 226 orders) outpace Saturday (₹4.94L) and Sunday (₹5.24L).</div>
+              <div class="insight-step"><strong>Interpretation:</strong> FashionWave consumer velocity is remarkably uniform across all 7 days (14.3% per day). Shopping is integrated into daily urban life rather than concentrated on weekends.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> Over-allocating store labor to weekends leaves high-velocity Friday and Monday shifts under-staffed while inflating weekend payroll costs.</div>
+              <div class="insight-step"><strong>Action:</strong> Rebalance store staffing rotas evenly. Shift peak promotional launches to Thursday evening to capture Friday/Monday footfall.</div>
+            </div>
+
+            <!-- Insight 3 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #3</span>
+                <span class="badge badge-amber">Ticket Size Driver</span>
+              </div>
+              <div class="insight-title">Footwear AOV Multiplier vs Inventory Starvation</div>
+              <div class="insight-step"><strong>Observation:</strong> Shoes generate 40.32% of revenue (₹14.28L) from only 19.67% of orders. Shoes AOV is ₹4,841.47 (2.1x Clothing, 5.7x Accessories), with robust 34.99% margin.</div>
+              <div class="insight-step"><strong>Interpretation:</strong> Footwear is FashionWave's highest-leverage commercial driver, but is severely under-merchandised in lower-performing stores.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> Store_25 logged only 1 shoe sale in 2 years (generating only ₹17.1K total rev). Stores lacking shoe inventory suffer structural revenue deficits.</div>
+              <div class="insight-step"><strong>Action:</strong> Enforce mandatory minimum core shoe SKU depth across all 50 stores; implement "Complete the Look" footwear styling prompts for clothing shoppers.</div>
+            </div>
+
+            <!-- Insight 4 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #4</span>
+                <span class="badge badge-teal">CRM Leakage</span>
+              </div>
+              <div class="insight-title">The "Unknown" Data Capture Blind Spot</div>
+              <div class="insight-step"><strong>Observation:</strong> 156 transactions (10.4%) and ₹3.77L in revenue are tagged "Unknown" Customer Type, generating a stellar 36.76% profit margin and ₹2,417 AOV.</div>
+              <div class="insight-step"><strong>Interpretation:</strong> Cashiers bypass customer phone/ID entry during checkout rush hours, blinding CRM systems to top-tier, high-margin patrons.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> Inability to retarget ₹3.77L worth of loyal, high-margin shoppers via retention or loyalty campaigns.</div>
+              <div class="insight-step"><strong>Action:</strong> Institute mandatory POS customer verification before invoice generation, backed by cashier data completeness performance incentives.</div>
+            </div>
+
+            <!-- Insight 5 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #5</span>
+                <span class="badge badge-emerald">Payment Economics</span>
+              </div>
+              <div class="insight-title">Digital Checkout Delivers AOV & Margin Premium</div>
+              <div class="insight-step"><strong>Observation:</strong> Digital payments (UPI/Wallets) achieve the highest AOV (₹2,485.67) and highest profit margin (35.30%), beating Cash (AOV ₹2,361.89, 34.10% margin).</div>
+              <div class="insight-step"><strong>Interpretation:</strong> Frictionless digital checkout reduces psychological spend friction, encouraging premium basket additions while reducing manual cash discount overrides.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> Shifting 20% of cash shoppers to UPI injects higher ticket sizes and removes cash reconciliation risk.</div>
+              <div class="insight-step"><strong>Action:</strong> Deploy dynamic QR codes at all checkout counters with micro-cashback partner rewards to accelerate digital tender adoption.</div>
+            </div>
+
+            <!-- Insight 6 -->
+            <div class="insight-card">
+              <div class="insight-header">
+                <span class="insight-num">INSIGHT #6</span>
+                <span class="badge badge-blue">Cross-Sell Opportunity</span>
+              </div>
+              <div class="insight-title">Accessories Margin Accretion Potential</div>
+              <div class="insight-step"><strong>Observation:</strong> Accessories commands the company's highest category margin at 35.25%, but has an AOV of only ₹843 and accounts for just 11.09% of revenue.</div>
+              <div class="insight-step"><strong>Interpretation:</strong> Accessories are sold as isolated standalone transactions rather than attached to apparel and shoe checkouts.</div>
+              <div class="insight-step"><strong>Business Impact:</strong> Increasing accessory attach rate by 20% across apparel orders yields ₹70,000+ pure high-margin profit with zero extra rent or staffing overhead.</div>
+              <div class="insight-step"><strong>Action:</strong> Place curated impulse accessories (belts, socks, wallets) directly at billing counters with standard "Add for ₹299" promotional bundles.</div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 14: Strategic Business Recommendations
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-14">
+        <div class="slide-header">
+          <div class="slide-subtitle">12 / Executive Action Plan</div>
+          <h2 class="slide-title">Strategic Business Recommendations & Roadmap</h2>
+          <p class="slide-desc">High-impact operational interventions prioritized by implementation timeframe, financial ROI, and risk mitigation.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid">
+            <!-- Quick Wins -->
+            <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="card-header-sm">
+                <span class="card-title-sm" style="color:var(--emerald-accent);">🚀 Quick Wins (Days 0 – 30)</span>
+                <span class="badge badge-emerald">Immediate Financial Payback</span>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald-light); font-size:14px;">
+                <strong>1. Cease Unconditioned High Discounts (>15%):</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Cap POS discounts at 15% max for single items. Require minimum 3 items or ₹3,500 basket to access higher markdowns.
+                  <br/><span style="color:var(--emerald-accent); font-weight:800;">Expected Impact: ₹85,000–₹1,00,000 annual profit recovery.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald-light); font-size:14px;">
+                <strong>2. Standardize POS Mandatory Customer Lookup:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Configure billing software to prompt mobile number before receipt generation. Reduce "Unknown" capture from 10.4% to &lt;2%.
+                  <br/><span style="color:var(--emerald-accent); font-weight:800;">Expected Impact: Recaptures ₹3.77L spend into loyalty CRM.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald-light); font-size:14px;">
+                <strong>3. Realignment of Staffing Rotas to Friday & Monday:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Reallocate store shift hours from weekend-heavy to Friday/Monday coverage to match actual consumer transaction volume peaks.
+                  <br/><span style="color:var(--emerald-accent); font-weight:800;">Expected Impact: Eliminates weekend overtime; improves service on peak days.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald-light); font-size:14px;">
+                <strong>4. Billing Counter Impulse Accessory Merchandising:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Place high-margin accessories at cash wraps with "Add for ₹299" cross-sell prompts. Target 20% attach rate.
+                  <br/><span style="color:var(--emerald-accent); font-weight:800;">Expected Impact: +₹30,000 incremental gross profit.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Long-Term Strategies -->
+            <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="card-header-sm">
+                <span class="card-title-sm" style="color:var(--blue-primary);">🏛️ Long-Term Initiatives (Months 1 – 6)</span>
+                <span class="badge badge-blue">Structural Network Growth</span>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--blue-primary); font-size:14px;">
+                <strong>1. Assortment Rebalancing for Laggard Stores:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Redistribute core footwear inventory into bottom 15 stores (e.g., Store_25, Store_09). Elevate baseline store AOV from ₹1,070 toward network median (₹2,361).
+                  <br/><span style="color:var(--blue-primary); font-weight:800;">Expected Impact: +₹1.80L–₹2.50L net revenue expansion.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--blue-primary); font-size:14px;">
+                <strong>2. Category-Specific Margin Guardrails:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Establish hard category margin floors in ERP (Clothing: 34%, Shoes: 35%, Accessories: 37%). Automate discount approvals exceeding 10%.
+                  <br/><span style="color:var(--blue-primary); font-weight:800;">Expected Impact: Protects network gross margin at &gt;36.5%.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--blue-primary); font-size:14px;">
+                <strong>3. Digital Tender & Omnichannel Loyalty Acceleration:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Partner with UPI payment gateways to offer instant 2% reward points on digital transactions, leveraging digital shoppers' higher AOV (₹2,486).
+                  <br/><span style="color:var(--blue-primary); font-weight:800;">Expected Impact: +8% lift in repeat customer transaction frequency.</span>
+                </div>
+              </div>
+
+              <div style="background:var(--slate-50); padding:12px 16px; border-radius:var(--radius-sm); border-left:4px solid var(--blue-primary); font-size:14px;">
+                <strong>4. Underperformer Turnaround or Consolidation:</strong>
+                <div style="color:var(--slate-700); margin-top:4px; line-height:1.5;">
+                  Place 12 Laggard quadrant stores on a 90-day performance review. If assortment rebalancing fails to lift orders to &gt;25/period, consider footprint consolidation.
+                  <br/><span style="color:var(--blue-primary); font-weight:800;">Expected Impact: Prevents structural operating drag on network EBITDA.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 15: Interactive Retail BI Dashboard
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-15" style="padding: 16px 20px 16px 20px;">
+        <div id="dashboard-container">
+
+          <!-- Global Interactive Filter Bar -->
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">Date Range:</span>
+              <input type="date" id="filter-date-start" class="filter-select" value="2024-11-18" min="2024-11-18" max="2026-11-18">
+              <span style="font-size:12px; color:var(--slate-400);">to</span>
+              <input type="date" id="filter-date-end" class="filter-select" value="2026-11-18" min="2024-11-18" max="2026-11-18">
+            </div>
+
+            <div class="filter-group">
+              <button class="btn-filter-preset active" data-preset="ALL">All 24M</button>
+              <button class="btn-filter-preset" data-preset="2025">2025</button>
+              <button class="btn-filter-preset" data-preset="2026">2026</button>
+              <button class="btn-filter-preset" data-preset="FESTIVE">Festive Q4</button>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Store:</span>
+              <select id="filter-store" class="filter-select">
+                <option value="ALL">All 50 Stores</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Category:</span>
+              <select id="filter-category" class="filter-select">
+                <option value="ALL">All Categories</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Shoes">Shoes</option>
+                <option value="Accessories">Accessories</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Customer:</span>
+              <select id="filter-customer-type" class="filter-select">
+                <option value="ALL">All Types</option>
+                <option value="New">New</option>
+                <option value="Returning">Returning</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Payment:</span>
+              <select id="filter-payment-mode" class="filter-select">
+                <option value="ALL">All Modes</option>
+                <option value="Card">Card</option>
+                <option value="Cash">Cash</option>
+                <option value="Digital">Digital</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Day:</span>
+              <select id="filter-day-type" class="filter-select">
+                <option value="ALL">All Days</option>
+                <option value="Weekday">Weekday</option>
+                <option value="Weekend">Weekend</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Discount:</span>
+              <select id="filter-discount-band" class="filter-select">
+                <option value="ALL">All Bands</option>
+                <option value="No Discount">No Discount</option>
+                <option value="Low Discount (1-5%)">Low (1-5%)</option>
+                <option value="Medium Discount (6-15%)">Med (6-15%)</option>
+                <option value="High Discount (16-30%)">High (16-30%)</option>
+              </select>
+            </div>
+
+            <button id="btn-reset-filters" class="btn-reset-filters">↺ Reset Filters</button>
+          </div>
+
+          <!-- Dynamic KPI Summary Bar -->
+          <div style="background:#FFFFFF; border-bottom:1px solid var(--slate-200); padding:10px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; gap:22px; align-items:center; flex-wrap:wrap;">
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Gross Sales</span>
+                <div id="d-kpi-gross" style="font-size:18px; font-weight:900; color:var(--slate-900);">₹38.56L</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Net Revenue</span>
+                <div id="d-kpi-rev" style="font-size:18px; font-weight:900; color:var(--blue-primary);">₹35.42L</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Operating Profit</span>
+                <div id="d-kpi-profit" style="font-size:18px; font-weight:900; color:var(--emerald-accent);">₹12.32L</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Profit Margin</span>
+                <div id="d-kpi-margin" style="font-size:18px; font-weight:900; color:var(--emerald-accent);">34.78%</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Orders</span>
+                <div id="d-kpi-orders" style="font-size:18px; font-weight:900; color:var(--slate-900);">1,500</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Units Sold</span>
+                <div id="d-kpi-units" style="font-size:18px; font-weight:900; color:var(--slate-900);">3,176</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">AOV</span>
+                <div id="d-kpi-aov" style="font-size:18px; font-weight:900; color:var(--slate-900);">₹2,361</div>
+              </div>
+              <div>
+                <span style="font-size:11px; color:var(--slate-500); text-transform:uppercase; font-weight:800;">Unit ASP</span>
+                <div id="d-kpi-asp" style="font-size:18px; font-weight:900; color:var(--slate-900);">₹1,115</div>
+              </div>
+            </div>
+
+            <div id="d-filter-record-count" style="font-size:13px; font-weight:700; color:var(--slate-600);">
+              Showing 1,500 of 1,500 records
+            </div>
+          </div>
+
+          <!-- Dashboard Tabs -->
+          <div class="dashboard-tabs">
+            <button class="d-tab-btn active" data-tab="overview">📈 Executive Overview</button>
+            <button class="d-tab-btn" data-tab="product">🏷️ Product & Margin</button>
+            <button class="d-tab-btn" data-tab="weekend">📅 Weekend vs Weekday</button>
+            <button class="d-tab-btn" data-tab="stores">🏬 Store Performance & Table</button>
+            <button class="d-tab-btn" data-tab="customers">👥 Customer & Tender</button>
+          </div>
+
+          <!-- Tab Content Area -->
+          <div class="dashboard-content-area">
+
+            <!-- TAB 1: OVERVIEW -->
+            <div class="d-view active" id="d-view-overview">
+              <div class="two-col-grid" style="grid-template-columns: 1.4fr 1fr;">
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Monthly Revenue & Profit Trajectory (24 Months)</span>
+                    <span class="badge badge-blue">Dynamic Filter Applied</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-overview-trend" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Category Revenue Distribution</span>
+                    <span class="badge badge-teal">Interactive Slice Hover</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-overview-cat-donut" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: PRODUCT -->
+            <div class="d-view" id="d-view-product">
+              <div class="two-col-grid">
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Revenue & Profit by Category (Filtered Slice)</span>
+                    <span class="badge badge-blue">Comparison</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-product-comparison" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Profit Margin % by Discount Band</span>
+                    <span class="badge badge-rose">Margin Diagnostic</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-product-disc-margin" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: WEEKEND -->
+            <div class="d-view" id="d-view-weekend">
+              <div class="two-col-grid" style="grid-template-columns: 1.4fr 1fr;">
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Revenue & Profit Across Days of the Week</span>
+                    <span class="badge badge-blue">Monday to Sunday</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-weekend-dow" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Weekday vs Weekend Contribution</span>
+                    <span class="badge badge-amber">Revenue Share</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-weekend-donut" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: STORES -->
+            <div class="d-view" id="d-view-stores">
+              <!-- Dynamic Matrix KPI Cards (Update with Dashboard Filters) -->
+              <div class="matrix-kpi-grid">
+                <div class="matrix-kpi-card strong">
+                  <div class="matrix-kpi-title" style="color:var(--emerald-accent);">
+                    <span>⭐ Strong Performer</span>
+                    <span class="badge-matrix badge-matrix-strong" id="d-matrix-kpi-strong-pct">46.0%</span>
+                  </div>
+                  <div class="matrix-kpi-val" style="color:var(--emerald-accent);" id="d-matrix-kpi-strong-val">23 Stores</div>
+                  <div class="matrix-kpi-sub" id="d-matrix-kpi-strong-sub">High Rev ≥ Median & High Profit ≥ Median</div>
+                </div>
+
+                <div class="matrix-kpi-card margin">
+                  <div class="matrix-kpi-title" style="color:var(--amber-accent);">
+                    <span>⚠️ Margin Problem</span>
+                    <span class="badge-matrix badge-matrix-margin" id="d-matrix-kpi-margin-pct">4.0%</span>
+                  </div>
+                  <div class="matrix-kpi-val" style="color:var(--amber-accent);" id="d-matrix-kpi-margin-val">2 Stores</div>
+                  <div class="matrix-kpi-sub" id="d-matrix-kpi-margin-sub">High Rev ≥ Median & Low Profit < Median</div>
+                </div>
+
+                <div class="matrix-kpi-card growth">
+                  <div class="matrix-kpi-title" style="color:var(--blue-primary);">
+                    <span>💎 Growth Opportunity</span>
+                    <span class="badge-matrix badge-matrix-growth" id="d-matrix-kpi-growth-pct">4.0%</span>
+                  </div>
+                  <div class="matrix-kpi-val" style="color:var(--blue-primary);" id="d-matrix-kpi-growth-val">2 Stores</div>
+                  <div class="matrix-kpi-sub" id="d-matrix-kpi-growth-sub">Low Rev < Median & High Profit ≥ Median</div>
+                </div>
+
+                <div class="matrix-kpi-card investigate">
+                  <div class="matrix-kpi-title" style="color:var(--rose-accent);">
+                    <span>🔍 Needs Investigation</span>
+                    <span class="badge-matrix badge-matrix-investigate" id="d-matrix-kpi-investigate-pct">46.0%</span>
+                  </div>
+                  <div class="matrix-kpi-val" style="color:var(--rose-accent);" id="d-matrix-kpi-investigate-val">23 Stores</div>
+                  <div class="matrix-kpi-sub" id="d-matrix-kpi-investigate-sub">Low Rev < Median & Low Profit < Median</div>
+                </div>
+              </div>
+
+              <!-- Matrix Scatter Plot -->
+              <div class="chart-card" style="margin-top:10px;">
+                <div class="card-header-sm">
+                  <span class="card-title-sm">Store Performance Matrix (2×2 Revenue vs Profit with Dynamic Median Crosshairs)</span>
+                  <span class="badge badge-blue" id="d-matrix-benchmarks-badge">Medians: ₹73.1K Rev | ₹24.4K Profit</span>
+                </div>
+                <div class="chart-canvas-wrapper" style="height:260px;">
+                  <canvas id="d-chart-stores-scatter" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+
+              <!-- Store Table with Toolbar & CSV Export -->
+              <div class="card" style="padding:14px 18px; margin-top:12px;">
+                <div class="table-toolbar-container">
+                  <div>
+                    <span class="card-title-sm">Store Performance Master Comparison Table</span>
+                    <div style="font-size:12px; color:var(--slate-500); margin-top:2px;">
+                      Click Store ID to filter dashboard • Click column headers to sort asc/desc
+                    </div>
+                  </div>
+                  <div class="table-toolbar-actions">
+                    <input type="text" id="store-table-search" class="table-input-search" placeholder="Search Store ID...">
+                    <select id="store-table-class-filter" class="table-select-filter">
+                      <option value="ALL">All Classifications</option>
+                      <option value="Strong Performer">Strong Performer</option>
+                      <option value="Margin Problem">Margin Problem</option>
+                      <option value="Growth Opportunity">Growth Opportunity</option>
+                      <option value="Needs Investigation">Needs Investigation</option>
+                    </select>
+                    <button id="btn-export-store-csv" class="btn-export-csv" title="Export current table to CSV">
+                      <span>📥 Export CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div style="overflow-y:auto; max-height:280px;">
+                  <table class="styled-table" id="store-table">
+                    <thead>
+                      <tr>
+                        <th class="sortable-th" data-col="id" style="cursor:pointer;">Store ID ⇕</th>
+                        <th class="sortable-th" data-col="orders" style="cursor:pointer;">Orders ⇕</th>
+                        <th class="sortable-th" data-col="units" style="cursor:pointer;">Units Sold ⇕</th>
+                        <th class="sortable-th" data-col="rev" style="cursor:pointer;">Net Revenue ⇕</th>
+                        <th class="sortable-th" data-col="profit" style="cursor:pointer;">Profit ⇕</th>
+                        <th class="sortable-th" data-col="margin" style="cursor:pointer;">Margin % ⇕</th>
+                        <th class="sortable-th" data-col="aov" style="cursor:pointer;">AOV ⇕</th>
+                        <th class="sortable-th" data-col="disc" style="cursor:pointer;">Avg Discount ⇕</th>
+                        <th class="sortable-th" data-col="classification" style="cursor:pointer;">Classification ⇕</th>
+                      </tr>
+                    </thead>
+                    <tbody id="store-table-body">
+                      <!-- Rendered dynamically by app.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 4 Category Dynamic Strategic Guidance Cards -->
+              <div class="four-col-grid" style="margin-top:12px;">
+                <div class="matrix-narrative-card strong" style="padding:12px 14px;">
+                  <div class="card-head" style="color:var(--emerald-accent); font-size:13px;">⭐ Strong Performer</div>
+                  <div style="font-size:12px; color:var(--slate-700); line-height:1.45;">
+                    High sales volume & robust profitability. Document local merchandising and customer retention methods as operational benchmarks.
+                  </div>
+                </div>
+                <div class="matrix-narrative-card margin" style="padding:12px 14px;">
+                  <div class="card-head" style="color:var(--amber-accent); font-size:13px;">⚠️ Margin Problem</div>
+                  <div style="font-size:12px; color:var(--slate-700); line-height:1.45;">
+                    Healthy revenue dragged down by margin leak. Audit promotional overrides and cap excessive discounts (&gt;10%) on high-turnover items.
+                  </div>
+                </div>
+                <div class="matrix-narrative-card growth" style="padding:12px 14px;">
+                  <div class="card-head" style="color:var(--blue-primary); font-size:13px;">💎 Growth Opportunity</div>
+                  <div style="font-size:12px; color:var(--slate-700); line-height:1.45;">
+                    High profit margins with low discounting. Expand local footfall through digital marketing and click-and-collect inventory stocking.
+                  </div>
+                </div>
+                <div class="matrix-narrative-card investigate" style="padding:12px 14px;">
+                  <div class="card-head" style="color:var(--rose-accent); font-size:13px;">🔍 Needs Investigation</div>
+                  <div style="font-size:12px; color:var(--slate-700); line-height:1.45;">
+                    Lagging in orders and revenue despite normal margin %. Launch 90-day review to assess footfall, location viability, and staffing.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 5: CUSTOMERS -->
+            <div class="d-view" id="d-view-customers">
+              <div class="two-col-grid">
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Customer Type Revenue Breakdown</span>
+                    <span class="badge badge-blue">New vs Returning vs Unknown</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-cust-donut" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+
+                <div class="chart-card">
+                  <div class="card-header-sm">
+                    <span class="card-title-sm">Revenue & Profit by Payment Mode</span>
+                    <span class="badge badge-teal">Card vs Cash vs Digital</span>
+                  </div>
+                  <div class="chart-canvas-wrapper" style="height:250px;">
+                    <canvas id="d-chart-payment-bar" class="interactive-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ----------------------------------------------------------------------
+           SLIDE 16: Executive Summary & Management Roadmap
+           ---------------------------------------------------------------------- -->
+      <section class="slide" id="slide-16">
+        <div class="slide-header">
+          <div class="slide-subtitle">14 / Executive Readout Synthesis</div>
+          <h2 class="slide-title">Executive Summary & Management Roadmap</h2>
+          <p class="slide-desc">Synthesizing findings into an operational 90-day transformation agenda and target KPI scorecard.</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="two-col-grid" style="grid-template-columns: 1.15fr 1fr;">
+            <!-- Core Takeaways -->
+            <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="card-title-sm" style="color:var(--navy-dark);">Core Executive Readout Synthesis</div>
+              
+              <div style="font-size:14px; line-height:1.6; color:var(--slate-800);">
+                <strong>1. Solid Foundation, Margin Leakage:</strong> FashionWave generates ₹35.42L net revenue and ₹12.32L profit (34.78% margin), but excessive discounting (&gt;15%) destroys 18.7 percentage points of margin without producing any unit volume expansion (r = -0.0034).
+              </div>
+
+              <div style="font-size:14px; line-height:1.6; color:var(--slate-800);">
+                <strong>2. Footwear is the Growth Engine:</strong> Shoes delivers 40.3% of revenue and ₹4,841 AOV from only 19.7% of orders. Underperforming stores lack shoe assortments, creating a 7.1x revenue chasm between top and bottom locations.
+              </div>
+
+              <div style="font-size:14px; line-height:1.6; color:var(--slate-800);">
+                <strong>3. Uniform Daily Velocity:</strong> Weekend sales (28.74%) match calendar day proportion (28.57%). Friday is the highest volume day. Staffing and promotional investments should be flat and balanced.
+              </div>
+
+              <div style="font-size:14px; line-height:1.6; color:var(--slate-800);">
+                <strong>4. CRM & Checkout Modernization:</strong> Recapturing the 10.4% "Unknown" customer base and accelerating digital UPI checkout will structurally elevate transaction basket sizes.
+              </div>
+            </div>
+
+            <!-- 90-Day Implementation Phasing & Target KPIs -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="card" style="padding:14px 18px;">
+                <div class="card-title-sm" style="color:var(--blue-primary);">90-Day Phased Implementation Agenda</div>
+                <div style="font-size:14px; color:var(--slate-800); line-height:1.65; margin-top:6px;">
+                  • <strong>Phase 1 (Days 1–30):</strong> Impose 15% discount cap; mandate POS phone capture; rebalance staffing rotas to Friday/Monday.<br/>
+                  • <strong>Phase 2 (Days 31–60):</strong> Seed core footwear SKUs in bottom 15 stores; launch checkout impulse accessory bundling.<br/>
+                  • <strong>Phase 3 (Days 61–90):</strong> Deploy UPI instant rewards program; conduct 90-day review of 12 Laggard quadrant stores.
+                </div>
+              </div>
+
+              <div class="card" style="padding:14px 18px;">
+                <div class="card-title-sm" style="color:var(--emerald-accent);">Target Governance KPIs (Next 12 Months)</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px;">
+                  <div style="background:var(--slate-50); padding:8px 12px; border-radius:4px;">
+                    <div style="font-size:11px; color:var(--slate-600); text-transform:uppercase; font-weight:700;">Overall Net Margin</div>
+                    <div style="font-size:18px; font-weight:900; color:var(--emerald-accent);">34.8% → 37.5%</div>
+                  </div>
+                  <div style="background:var(--slate-50); padding:8px 12px; border-radius:4px;">
+                    <div style="font-size:11px; color:var(--slate-600); text-transform:uppercase; font-weight:700;">Average Order Value</div>
+                    <div style="font-size:18px; font-weight:900; color:var(--blue-primary);">₹2,361 → ₹2,650</div>
+                  </div>
+                  <div style="background:var(--slate-50); padding:8px 12px; border-radius:4px;">
+                    <div style="font-size:11px; color:var(--slate-600); text-transform:uppercase; font-weight:700;">High-Discount Share</div>
+                    <div style="font-size:18px; font-weight:900; color:var(--rose-accent);">19.4% → &lt; 8.0%</div>
+                  </div>
+                  <div style="background:var(--slate-50); padding:8px 12px; border-radius:4px;">
+                    <div style="font-size:11px; color:var(--slate-600); text-transform:uppercase; font-weight:700;">Unknown Customer Tag</div>
+                    <div style="font-size:18px; font-weight:900; color:var(--emerald-accent);">10.4% → &lt; 2.0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       Bottom Navigation Footer
+       ========================================================================== -->
+  <footer id="app-footer">
+    <div class="footer-left">
+      <span id="slide-counter-badge" class="slide-counter-badge">Slide 1 of 16</span>
+      <span class="keyboard-shortcut-hint">
+        Use <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate | Press <kbd>F</kbd> for Fullscreen
+      </span>
+    </div>
+
+    <div class="footer-nav-buttons">
+      <button id="btn-prev-slide" class="btn-nav" disabled>← Previous</button>
+      <button id="btn-next-slide" class="btn-nav">Next →</button>
+    </div>
+  </footer>
+
+  <!-- Master Data & Application Scripts -->
+  <script src="data.js"></script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
