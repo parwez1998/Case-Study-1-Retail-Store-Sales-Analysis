@@ -1,0 +1,4 @@
+check_ss/
+test_s8.html
+*.pyc
+__pycache__/

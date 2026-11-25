@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FashionWave Retail Analytics — Interactive Power BI Executive Deck</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Pinned CDN Libraries with Local /lib Offline Fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script>if (typeof window.echarts === 'undefined') { document.write('<script src="./lib/echarts.min.js"><\/script>'); }</script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>if (typeof window.Papa === 'undefined') { document.write('<script src="./lib/papaparse.min.js"><\/script>'); }</script>
+</head>
+<body class="zoom-level-100">
+
+  <div id="app-container">
+    <!-- =====================================================================
+         TOP HEADER
+         ===================================================================== -->
+    <header id="app-header">
+      <div class="header-left">
+        <div class="brand-wrap">
+          <div class="brand-icon">FW</div>
+          <span>FashionWave Analytics</span>
+        </div>
+        <div class="data-status-badge" id="data-status-badge" title="Active dataset source and row count">
+          <span class="status-dot"></span>
+          <span id="data-status-text">Loading dataset...</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="hdr-btn" id="btn-toggle-slicers" title="Toggle Filter Slicer Panel">☰ Filters</button>
+        <div class="zoom-group" title="Adjust Presentation Text Scale">
+          <button id="btn-zoom-out" aria-label="Decrease text size">A-</button>
+          <span class="zoom-val" id="zoom-val-label">100%</span>
+          <button id="btn-zoom-in" aria-label="Increase text size">A+</button>
+        </div>
+        <button class="hdr-btn meeting-mode-pill" id="btn-meeting-mode" title="Meeting Mode (M): +10% text, hide slicers, cursor spotlight">🎥 Meet</button>
+        <button class="hdr-btn" id="btn-theme-toggle" title="Toggle Light / Dark Theme">🌓 Theme</button>
+        <button class="hdr-btn" id="btn-notes" title="Speaker Notes (N)">📝 Notes</button>
+        <button class="hdr-btn" id="btn-overview" title="Slide Overview Grid (G)">⊞ Grid</button>
+        <button class="hdr-btn" id="btn-tour" title="Quick Tour & Shortcuts (?)">?</button>
+        <button class="hdr-btn primary" id="btn-print" title="Export 16:9 PDF">🖨️ PDF</button>
+        <button class="hdr-btn" id="btn-fullscreen" title="Fullscreen (F)">⛶</button>
+      </div>
+    </header>
+
+    <!-- =====================================================================
+         DECK VIEWPORT (Slicer Rail + Slide Stage)
+         ===================================================================== -->
+    <div id="deck-viewport">
+      <!-- Left Slicer Rail -->
+      <aside id="slicer-panel" aria-label="Interactive Data Slicers">
+        <div class="slicer-header">
+          <span class="slicer-title">🎛️ Global Slicers</span>
+          <button class="slicer-reset-btn" id="btn-reset-filters">Reset All</button>
+        </div>
+
+        <div class="slicer-counter-box">
+          <span>Active Scope</span>
+          <span id="slicer-row-counter">1,500 of 1,500 rows</span>
+        </div>
+
+        <div class="active-filter-pills" id="active-filter-pills"></div>
+
+        <!-- Date Range -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Date Range</span></div>
+          <div class="slicer-date-row">
+            <input type="date" class="slicer-input" id="filter-date-start" aria-label="Start Date">
+            <input type="date" class="slicer-input" id="filter-date-end" aria-label="End Date">
+          </div>
+        </div>
+
+        <!-- Category Chips -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Category</span><span>Click to filter</span></div>
+          <div class="chip-group" id="slicer-category-chips"></div>
+        </div>
+
+        <!-- Store Searchable Dropdown -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Store (50 Locations)</span></div>
+          <input type="text" class="slicer-input" id="filter-store-search" placeholder="Search Store_01..50..." aria-label="Search Store">
+          <select class="slicer-select" id="filter-store-select" aria-label="Select Store">
+            <option value="">All 50 Stores</option>
+          </select>
+        </div>
+
+        <!-- Discount Band Chips -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Discount Band</span></div>
+          <div class="chip-group" id="slicer-discount-chips"></div>
+        </div>
+
+        <!-- Customer Type Chips -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Customer Type</span></div>
+          <div class="chip-group" id="slicer-customer-chips"></div>
+        </div>
+
+        <!-- Payment Mode Chips -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Payment Mode</span></div>
+          <div class="chip-group" id="slicer-payment-chips"></div>
+        </div>
+
+        <!-- Day Type Chips -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>Day Type</span></div>
+          <div class="chip-group" id="slicer-daytype-chips"></div>
+        </div>
+
+        <!-- Data Hygiene Toggle (Unknown POS Gap) -->
+        <div class="slicer-group">
+          <div class="slicer-label"><span>POS "Unknown" Handling</span></div>
+          <div class="toggle-row">
+            <span id="unknown-toggle-label">Retain Unknowns (Default)</span>
+            <label class="switch" title="Toggle between retaining or excluding Unknown CustomerType/PaymentMode rows">
+              <input type="checkbox" id="toggle-exclude-unknown">
+              <span class="slider-round"></span>
+            </label>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Stage Container -->
+      <main id="stage-container">
+
+        <!-- =================================================================
+             SLIDE 1: EXECUTIVE SUMMARY
+             ================================================================= -->
+        <section class="slide active" id="slide-1" data-slide="0">
+          <div class="hero-banner-container">
+            <div class="hero-bg-blob"></div>
+            <div class="hero-content">
+              <span class="hero-tag">Executive Case Study Readout · Nov 2024 – Nov 2026</span>
+              <h1 class="hero-title">FashionWave Retail Analytics & Margin Optimization</h1>
+              <p class="hero-subtitle" id="s1-hero-subtitle">
+                Loading empirical summary across 1,500 transactions and 50 national retail stores...
+              </p>
+              <div class="hero-kpi-grid" id="s1-hero-kpis"></div>
+            </div>
+          </div>
+
+          <div class="grid-2-col" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Operating Margin Gauge (%)</span>
+                  <span class="info-icon" data-info="Shows net operating profit as a % of net realized revenue against the 35.0% target benchmark. Hover arc for exact value.">i</span>
+                </h3>
+                <div class="card-actions">
+                  <button class="card-action-btn btn-focus" data-chart="s1-chart-gauge">Focus</button>
+                </div>
+              </div>
+              <div class="chart-container" id="s1-chart-gauge"></div>
+              <div class="chart-insight" id="s1-insight-gauge">Computing margin benchmark...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Category Net Revenue & Profit Mix</span>
+                  <span class="info-icon" data-info="Compares each product category's share of total net revenue. Click any slice to cross-filter the entire presentation.">i</span>
+                </h3>
+                <div class="card-actions">
+                  <button class="card-action-btn btn-focus" data-chart="s1-chart-donut">Focus</button>
+                </div>
+              </div>
+              <div class="chart-container" id="s1-chart-donut"></div>
+              <div class="chart-insight" id="s1-insight-donut">Computing category share...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 2: CONTEXT, OBJECTIVES & ASSUMPTIONS
+             ================================================================= -->
+        <section class="slide" id="slide-2" data-slide="1">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 02</span>
+                <h2 class="slide-title">Business Context, Objectives & Analytical Assumptions</h2>
+              </div>
+              <span class="hint-chip">5 Core Management Questions</span>
+            </div>
+            <p class="slide-headline">Diagnosing margin leakage, discount elasticity, store assortment divides, and weekday-vs-weekend traffic across 50 Indian urban stores.</p>
+          </div>
+
+          <div class="grid-3-col">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>1. Category Profitability</span></h3></div>
+              <p style="color:var(--text-muted); line-height:1.45;">Identify which categories (<strong>Clothing, Shoes, Accessories</strong>) drive volume versus profit leverage and where margin is structurally vulnerable.</p>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>2. Discounting ROI & Elasticity</span></h3></div>
+              <p style="color:var(--text-muted); line-height:1.45;">Test whether <strong>16–30% promotional markdowns</strong> expand basket unit volume or merely cannibalize full-price operating profit.</p>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>3. Weekend vs Weekday Myth</span></h3></div>
+              <p style="color:var(--text-muted); line-height:1.45;">Verify if Saturday–Sunday footfall warrants elevated weekend staffing rotas compared to <strong>Friday and Monday</strong> commute peaks.</p>
+            </div>
+          </div>
+
+          <div class="grid-2-col" style="flex:1;">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>4 & 5. Store Benchmarking & Channel Monetization</span></h3></div>
+              <ul style="padding-left:18px; display:flex; flex-direction:column; gap:8px; color:var(--text-muted); line-height:1.45;">
+                <li><strong>Store Network Chasm:</strong> Contrast top-quartile "Strong Performers" against bottom-tier stores using median Revenue & Profit crosshairs.</li>
+                <li><strong>Customer & Tender Capture:</strong> Quantify the <strong>10.4% Unknown CustomerType</strong> CRM gap and compare <strong>Digital UPI vs Cash vs Card</strong> basket economics.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>Analytical Scope & Integrity Guardrails</span></h3></div>
+              <ul style="padding-left:18px; display:flex; flex-direction:column; gap:8px; color:var(--text-muted); line-height:1.45;">
+                <li><strong>Orders vs Unique Customers:</strong> No persistent customer ID exists in the dataset; frequency metrics strictly reflect <strong>Transaction Order Counts</strong> (no fabricated LTV/RFM).</li>
+                <li><strong>Zero Hardcoded Metrics:</strong> All KPIs, ratios, regressions, and insights recalculate live in JavaScript from the filtered dataset.</li>
+                <li><strong>Unknown Retention Governance:</strong> Retaining <code>Unknown</code> POS tags preserves <strong>10.64% of net revenue</strong> and exposes checkout compliance gaps.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 3: DATA OVERVIEW & CLEANING AUDIT
+             ================================================================= -->
+        <section class="slide" id="slide-3" data-slide="2">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 03</span>
+                <h2 class="slide-title">Data Overview, Hygiene Audit & Feature Engineering</h2>
+              </div>
+              <button class="card-action-btn" id="btn-s3-toggle-unknown">Toggle Unknown POS Rows</button>
+            </div>
+            <p class="slide-headline" id="s3-headline">1,500 validated transactions across 11 columns with 0 nulls, 0 duplicates, and 100% positive base markup before discounts.</p>
+          </div>
+
+          <div class="grid-4-col" id="s3-hygiene-kpis"></div>
+
+          <div class="grid-asymmetric" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>POS Capture Gaps & Discount Band Distribution</span>
+                  <span class="info-icon" data-info="Compares complete vs Unknown POS tags and transaction counts across calculated Discount Bands. Use the left sidebar toggle to exclude Unknown rows.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s3-chart-audit">Focus</button>
+              </div>
+              <div class="chart-container" id="s3-chart-audit"></div>
+              <div class="chart-insight" id="s3-insight-audit">Loading hygiene audit...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><span>Verified Schema & Accounting Formulas</span></h3>
+              </div>
+              <div class="table-wrap">
+                <table class="bi-table">
+                  <thead>
+                    <tr><th>Metric / Field</th><th>Formula / Rule</th><th>Verified Range</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td title="Gross Sales">Gross Sales</td><td title="Quantity × UnitPrice">Quantity × UnitPrice</td><td>₹199 – ₹17,495</td></tr>
+                    <tr><td title="Net Revenue">Net Revenue</td><td title="Gross × (1 - Discount/100)">Gross × (1 − Disc/100)</td><td>₹139.3 – ₹17,495</td></tr>
+                    <tr><td title="Operating Profit">Operating Profit</td><td title="Net Revenue - (Quantity × CostPerUnit)">NetRev − (Qty × Cost)</td><td>₹1.11 – ₹7,828.35</td></tr>
+                    <tr><td title="Profit Margin">Profit Margin %</td><td title="(Profit / Net Revenue) × 100">(Profit / NetRev) × 100</td><td>0.06% – 50.0%</td></tr>
+                    <tr><td title="Discount Bands">Discount Bands</td><td title="0% | 1-5% | 6-15% | 16-30%">No | Low | Med | High</td><td>0% – 30%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 4: KPI DASHBOARD WITH TRENDS
+             ================================================================= -->
+        <section class="slide" id="slide-4" data-slide="3">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 04</span>
+                <h2 class="slide-title">Executive KPI Dashboard & Monthly Trajectory</h2>
+              </div>
+              <span class="hint-chip">Hover line for MoM change · Click bars to filter</span>
+            </div>
+            <p class="slide-headline" id="s4-headline">Tracking 24-month revenue & profit trajectory alongside markdown erosion across discount tiers.</p>
+          </div>
+
+          <div class="grid-5-col" id="s4-kpi-strip"></div>
+
+          <div class="grid-asymmetric" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Monthly Net Revenue & Operating Profit Trend (₹)</span>
+                  <span class="info-icon" data-info="Monthly trajectory of Net Revenue and Operating Profit with Peak and Average reference lines. Hover any month for MoM delta.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s4-chart-monthly">Focus</button>
+              </div>
+              <div class="chart-container" id="s4-chart-monthly"></div>
+              <div class="chart-insight" id="s4-insight-monthly">Computing monthly trend...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Revenue & Margin % by Discount Band</span>
+                  <span class="info-icon" data-info="Compares Net Revenue (bars) and Profit Margin % (line) across Discount Bands. Click a bar to filter by Discount Band.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s4-chart-discband">Focus</button>
+              </div>
+              <div class="chart-container" id="s4-chart-discband"></div>
+              <div class="chart-insight" id="s4-insight-discband">Computing discount band impact...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 5: PRODUCT & CATEGORY PERFORMANCE
+             ================================================================= -->
+        <section class="slide" id="slide-5" data-slide="4">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 05</span>
+                <h2 class="slide-title">Product Category Performance & Assortment Leverage</h2>
+              </div>
+              <div class="card-actions">
+                <button class="card-action-btn" id="btn-s5-view-toggle">Switch Chart / Table</button>
+                <button class="card-action-btn" id="btn-s5-export">Export CSV</button>
+              </div>
+            </div>
+            <p class="slide-headline" id="s5-headline">Clothing anchors volume, Shoes drives 2x AOV leverage, and Accessories leads operating margin %.</p>
+          </div>
+
+          <div class="grid-3-col" id="s5-category-kpis"></div>
+
+          <div class="grid-2-col" id="s5-charts-wrap" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Category & Price-Tier Revenue Treemap</span>
+                  <span class="info-icon" data-info="Hierarchical treemap sized by Net Revenue across Categories and Price Tiers (Budget <₹800, Mid ₹800-₹1999, Premium ₹2000+). Click to filter.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s5-chart-treemap">Focus</button>
+              </div>
+              <div class="chart-container" id="s5-chart-treemap"></div>
+              <div class="chart-insight" id="s5-insight-treemap">Computing treemap...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Category Net Revenue, Profit & AOV Comparison</span>
+                  <span class="info-icon" data-info="Grouped bar comparing Net Revenue and Profit per category, with AOV callouts. Click any category bar to cross-filter.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s5-chart-bar">Focus</button>
+              </div>
+              <div class="chart-container" id="s5-chart-bar"></div>
+              <div class="chart-insight" id="s5-insight-bar">Computing category comparison...</div>
+            </div>
+          </div>
+
+          <div class="card" id="s5-table-wrap" style="display:none; flex:1;">
+            <div class="card-header">
+              <h3 class="card-title"><span>Top Products & Category Performance Table</span></h3>
+            </div>
+            <div class="table-wrap" id="s5-table-container"></div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 6: STORE NETWORK & CUSTOMER / CHANNEL ANALYSIS
+             ================================================================= -->
+        <section class="slide" id="slide-6" data-slide="5">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 06</span>
+                <h2 class="slide-title">Store Network Matrix & Customer / Payment Monetization</h2>
+              </div>
+              <span class="hint-chip">Click any Store point or bar to isolate it</span>
+            </div>
+            <p class="slide-headline" id="s6-headline">2×2 Median Performance Matrix segments 50 stores while Payment & Customer slices expose UPI premium and CRM leakage.</p>
+          </div>
+
+          <div class="grid-3-col" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>2×2 Store Matrix (Rev vs Profit)</span>
+                  <span class="info-icon" data-info="Plots all active stores by Net Revenue (X) vs Profit (Y) with dynamic Median crosshairs. Click a dot to filter by Store.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s6-chart-matrix">Focus</button>
+              </div>
+              <div class="chart-container" id="s6-chart-matrix"></div>
+              <div class="chart-insight" id="s6-insight-matrix">Computing store quadrants...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Top 10 Stores by Net Revenue</span>
+                  <span class="info-icon" data-info="Horizontal ranking of Top 10 stores vs network average. Click any bar to isolate that store.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s6-chart-topstores">Focus</button>
+              </div>
+              <div class="chart-container" id="s6-chart-topstores"></div>
+              <div class="chart-insight" id="s6-insight-topstores">Ranking top stores...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Payment Mode & Customer Split</span>
+                  <span class="info-icon" data-info="Compares Net Revenue and AOV by Payment Mode (Card, Cash, Digital UPI, Unknown). Click a bar to filter.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s6-chart-payment">Focus</button>
+              </div>
+              <div class="chart-container" id="s6-chart-payment"></div>
+              <div class="chart-insight" id="s6-insight-payment">Computing payment economics...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 7: DEEP-DIVE ON MAIN BUSINESS PROBLEMS
+             ================================================================= -->
+        <section class="slide" id="slide-7" data-slide="6">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 07</span>
+                <h2 class="slide-title">Deep-Dive: The Discount Margin Trap & Store Chasm</h2>
+              </div>
+              <span class="hint-chip">Empirical Root-Cause Diagnostics</span>
+            </div>
+            <p class="slide-headline" id="s7-headline">Markdowns show zero basket-size elasticity (r = -0.0034) yet slash margin by 18.7pp, while footwear starvation drives a 7.1x store gap.</p>
+          </div>
+
+          <div class="grid-4-col" id="s7-problem-kpis"></div>
+
+          <div class="grid-2-col" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Discount % vs Profit Margin % Erosion</span>
+                  <span class="info-icon" data-info="Plots transaction Discount % against realized Profit Margin % plus average units/order. Shows margin collapses without expanding basket size.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s7-chart-elasticity">Focus</button>
+              </div>
+              <div class="chart-container" id="s7-chart-elasticity"></div>
+              <div class="chart-insight" id="s7-insight-elasticity">Computing elasticity...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Top vs Bottom Stores: Footwear Assortment Gap</span>
+                  <span class="info-icon" data-info="Compares category revenue mix between Top 5 Stars and Bottom 5 Laggards (notably Store_25 with minimal shoe volume).">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s7-chart-chasm">Focus</button>
+              </div>
+              <div class="chart-container" id="s7-chart-chasm"></div>
+              <div class="chart-insight" id="s7-insight-chasm">Computing store chasm...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 8: TRENDS & SEASONALITY (WEEKEND MYTH & FESTIVE PEAK)
+             ================================================================= -->
+        <section class="slide" id="slide-8" data-slide="7">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 08</span>
+                <h2 class="slide-title">Trends & Seasonality: Debunking the Weekend Surge Myth</h2>
+              </div>
+              <span class="hint-chip">Click Day-of-Week bar to filter</span>
+            </div>
+            <p class="slide-headline" id="s8-headline">Friday (#1) and Monday (#2) outperform Saturday, while October festive spikes drive peak annual EBITDA.</p>
+          </div>
+
+          <div class="grid-2-col" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Day-of-Week Net Revenue & Order Volume</span>
+                  <span class="info-icon" data-info="7-day revenue bars and order count line with Average benchmark. Highlights Friday and Monday peaks vs Weekend share.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s8-chart-dow">Focus</button>
+              </div>
+              <div class="chart-container-tall" id="s8-chart-dow"></div>
+              <div class="chart-insight" id="s8-insight-dow">Computing weekday vs weekend velocity...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Seasonality Heatmap: Month × Category Revenue (₹)</span>
+                  <span class="info-icon" data-info="Heatmap of monthly Net Revenue across categories. Hover any cell for exact value and variance vs monthly average.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s8-chart-heatmap">Focus</button>
+              </div>
+              <div class="chart-container-tall" id="s8-chart-heatmap"></div>
+              <div class="chart-insight" id="s8-insight-heatmap">Computing festive seasonality...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 9: WHAT-IF SIMULATOR
+             ================================================================= -->
+        <section class="slide" id="slide-9" data-slide="8">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 09</span>
+                <h2 class="slide-title">Strategic Profit Recovery & What-If Simulator</h2>
+              </div>
+              <button class="card-action-btn" id="btn-sim-reset">Reset Simulator</button>
+            </div>
+            <p class="slide-headline">Model the empirical profit upside from capping unconditioned discounts, rebalancing footwear inventory, and lifting accessory attach rates.</p>
+          </div>
+
+          <div class="grid-4-col" id="s9-sim-kpis"></div>
+
+          <div class="grid-asymmetric" style="flex:1;">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><span>Strategic Levers (Tied to Case Study Recommendations)</span></h3>
+              </div>
+              <div class="sim-slider-group">
+                <div class="sim-row">
+                  <label for="sim-disc-cap">1. Cap Max Discount on Unbundled Orders (%)</label>
+                  <span class="sim-val-badge" id="sim-disc-cap-val">30% (Current)</span>
+                  <input type="range" class="sim-range" id="sim-disc-cap" min="10" max="30" step="5" value="30">
+                </div>
+                <div class="sim-row">
+                  <label for="sim-shoe-lift">2. Laggard Store Footwear Assortment Recovery (%)</label>
+                  <span class="sim-val-badge" id="sim-shoe-lift-val">+0%</span>
+                  <input type="range" class="sim-range" id="sim-shoe-lift" min="0" max="35" step="5" value="0">
+                </div>
+                <div class="sim-row">
+                  <label for="sim-acc-attach">3. Accessories Checkout Cross-Sell Attach Lift (%)</label>
+                  <span class="sim-val-badge" id="sim-acc-attach-val">+0%</span>
+                  <input type="range" class="sim-range" id="sim-acc-attach" min="0" max="30" step="5" value="0">
+                </div>
+                <div class="sim-row">
+                  <label for="sim-upi-shift">4. Cash-to-Digital UPI & CRM Capture Shift (%)</label>
+                  <span class="sim-val-badge" id="sim-upi-shift-val">+0%</span>
+                  <input type="range" class="sim-range" id="sim-upi-shift" min="0" max="25" step="5" value="0">
+                </div>
+              </div>
+              <div class="chart-insight" id="s9-sim-summary">Adjust levers above to simulate EBITDA recovery against current baseline.</div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <span>Baseline vs Simulated Revenue & Profit (₹)</span>
+                  <span class="info-icon" data-info="Compares filtered baseline Net Revenue and Profit against your simulated scenario.">i</span>
+                </h3>
+                <button class="card-action-btn btn-focus" data-chart="s9-chart-sim">Focus</button>
+              </div>
+              <div class="chart-container" id="s9-chart-sim"></div>
+              <div class="chart-insight" id="s9-insight-sim">Move sliders to model financial impact.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================
+             SLIDE 10: RECOMMENDATIONS & ROADMAP
+             ================================================================= -->
+        <section class="slide" id="slide-10" data-slide="9">
+          <div class="slide-header">
+            <div class="slide-title-row">
+              <div class="slide-title-wrap">
+                <span class="slide-num-pill">SLIDE 10</span>
+                <h2 class="slide-title">Strategic Recommendations, Execution Roadmap & Risks</h2>
+              </div>
+              <button class="card-action-btn" id="btn-s10-export">Export Store Action CSV</button>
+            </div>
+            <p class="slide-headline">Prioritized Quick Wins (0–30 Days) and Structural Initiatives (1–6 Months) targeting ₹3.3L+ annualized profit expansion.</p>
+          </div>
+
+          <div class="grid-2-col">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>⚡ Quick Wins (0–30 Days)</span></h3><span class="badge-pill badge-green">High Feasibility</span></div>
+              <ul style="padding-left:18px; display:flex; flex-direction:column; gap:7px; color:var(--text-muted); line-height:1.4;">
+                <li><strong>Cap Unconditioned Discounts at 15%:</strong> Require 3+ items or ₹3,500 cart for &gt;10% off. <em>Impact: ₹85K–₹1.00L recovery</em> | <em>Risk:</em> Shopper pushback (mitigate via bundle signage).</li>
+                <li><strong>Level-Load Friday & Monday Staffing:</strong> Shift weekend-heavy rotas to Friday (#1) & Monday (#2) peaks. <em>Impact: Higher conversion & labor ROI.</em></li>
+                <li><strong>POS Mandatory Phone Capture & UPI QR:</strong> Close 10.4% Unknown CRM gap and shift Cash to UPI (+₹124 AOV).</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h3 class="card-title"><span>🚀 Long-Term Initiatives (1–6 Months)</span></h3><span class="badge-pill badge-violet">Structural Scale</span></div>
+              <ul style="padding-left:18px; display:flex; flex-direction:column; gap:7px; color:var(--text-muted); line-height:1.4;">
+                <li><strong>Footwear Assortment Rebalancing:</strong> Enforce minimum Shoe SKU depth in all 23 "Needs Investigation" stores (fixing Store_25's 7.1x deficit). <em>Impact: ₹1.8L–₹2.5L revenue</em> | <em>Risk:</em> Working capital tie-up.</li>
+                <li><strong>Checkout Accessory Attach Towers:</strong> Pair 35.25%-margin Accessories with Clothing/Shoes. <em>Impact: ₹70K+ profit.</em></li>
+                <li><strong>Pre-Festive Sep 15 Inventory Lock:</strong> Prevent stockouts ahead of October Diwali surge.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card" style="flex:1;">
+            <div class="card-header">
+              <h3 class="card-title"><span>Store Action Register (Click any row to filter deck by Store)</span></h3>
+              <span class="hint-chip" id="s10-table-count">50 Stores</span>
+            </div>
+            <div class="table-wrap" id="s10-store-table-wrap"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- =====================================================================
+         FOOTER NAVIGATION BAR
+         ===================================================================== -->
+    <footer id="app-footer">
+      <div class="footer-left">
+        <button class="nav-btn" id="btn-prev-slide">← Prev</button>
+        <span id="footer-slide-indicator" style="font-size:12px; font-weight:700;">Slide 1 / 10</span>
+        <button class="nav-btn" id="btn-next-slide">Next →</button>
+      </div>
+      <div class="footer-center">
+        <div class="slide-dots" id="slide-dots"></div>
+      </div>
+      <div class="footer-right">
+        <span style="font-size:11px; color:var(--text-dim);">Keys: ←/→ · 1-9,0 · M Meet · F Full · G Grid · N Notes · D Diag · ? Help</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Floating Tooltip for KPIs, Info Icons, Table Cells & Chips -->
+  <div id="fw-floating-tooltip" role="tooltip"></div>
+
+  <!-- Meeting Mode Spotlight -->
+  <div id="meeting-spotlight"></div>
+
+  <!-- Speaker Notes Drawer -->
+  <aside class="side-drawer" id="speaker-notes-drawer" aria-label="Speaker Notes">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <strong style="font-size:15px;">📝 Presenter Notes</strong>
+      <button class="modal-close-btn" id="btn-close-notes">×</button>
+    </div>
+    <div id="speaker-notes-body" style="display:flex; flex-direction:column; gap:10px; font-size:13px; color:var(--text-muted); line-height:1.5;"></div>
+  </aside>
+
+  <!-- Diagnostics Drawer (D Key) -->
+  <aside class="side-drawer" id="diagnostics-drawer" aria-label="Chart Diagnostics">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <strong style="font-size:15px; color:var(--color-accent);">🩺 Chart & Layout Diagnostics</strong>
+      <button class="modal-close-btn" id="btn-close-diag">×</button>
+    </div>
+    <div id="diagnostics-body" style="display:flex; flex-direction:column; gap:8px; font-size:12px;"></div>
+  </aside>
+
+  <!-- Focus Chart Modal -->
+  <div class="modal-overlay" id="focus-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="focus-modal-title">Expanded Chart</h3>
+        <button class="modal-close-btn" id="btn-close-focus">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="focus-chart-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide Overview Grid Modal (G Key) -->
+  <div class="modal-overlay" id="overview-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Presentation Slide Grid (10 Slides)</h3>
+        <button class="modal-close-btn" id="btn-close-overview">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="overview-grid" id="overview-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- First-Run Tour & Shortcuts Modal (? Key) -->
+  <div class="modal-overlay" id="tour-modal">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="tour-step-title">Welcome to FashionWave Interactive BI Deck</h3>
+        <button class="modal-close-btn" id="btn-close-tour">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="tour-step-desc" style="line-height:1.55; color:var(--text-muted);"></p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span id="tour-step-counter" style="font-size:12px; font-weight:700; color:var(--color-accent);">Step 1 of 4</span>
+          <div style="display:flex; gap:8px;">
+            <button class="nav-btn" id="btn-tour-skip">Skip Tour</button>
+            <button class="hdr-btn primary" id="btn-tour-next">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual CSV Fallback Loader -->
+  <div id="fallback-loader">
+    <div class="drop-zone" id="drop-zone">
+      <h2 style="font-size:20px; font-weight:800;">Load FashionWave Dataset</h2>
+      <p style="color:var(--text-muted); font-size:13px;">Could not auto-load <code>fashionwave_sales_cleaned.csv</code> or <code>data.js</code>. Drop your CSV here or pick it manually — everything stays local in your browser.</p>
+      <input type="file" id="manual-csv-input" accept=".csv" style="margin:0 auto;">
+    </div>
+  </div>
+
+  <!-- Backup Data & Main App Script -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
