@@ -1,7 +1,6 @@
 /* ==========================================================================
-   FASHIONWAVE RETAIL ANALYTICS — INTERACTIVE POWER BI ENGINE
-   Modules: Data Loader & Cleaner -> Filter Store -> Pure Aggregations ->
-            Rich Tooltips -> ECharts Renderers -> UI & Presentation Controls
+   FASHIONWAVE RETAIL STORE SALES ANALYSIS — 12-SLIDE STORY-DRIVEN ENGINE
+   Load: ./fashionwave_sales.csv -> ./data.js (RAW_FASHIONWAVE_CSV) -> Picker
    ========================================================================== */
 (() => {
   'use strict';
@@ -11,68 +10,46 @@
     'Quantity', 'UnitPrice', 'Discount', 'CostPerUnit', 'CustomerType', 'PaymentMode'
   ];
 
-  const CAT_COLORS = {
-    Clothing: '#7C3AED',
-    Shoes: '#E11D48',
-    Accessories: '#D97706'
-  };
-
+  const CAT_COLORS = { Clothing: '#7C3AED', Shoes: '#E11D48', Accessories: '#D97706' };
   const BAND_ORDER = ['No Discount', 'Low (1-5%)', 'Medium (6-15%)', 'High (16-30%)'];
   const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const SEASON_ORDER = ['Festive (Oct-Nov)', 'Winter (Dec-Jan)', 'Regular (Feb-Sep)'];
 
   const SLIDE_META = [
-    { title: 'Executive Summary', notes: ['Open with ₹35.42L Net Revenue, ₹12.32L Profit, and 34.78% Operating Margin across 1,500 orders and 50 stores.', 'Highlight the 3 core vulnerabilities: Zero discount elasticity, 7.1x store gap, and the Weekend staffing fallacy.'] },
-    { title: 'Context, Objectives & Assumptions', notes: ['Walk through the 5 strategic management questions.', 'Clarify that the dataset tracks Transaction Orders (not unique customer IDs), and Unknown POS tags are retained to measure checkout compliance.'] },
-    { title: 'Data Overview & Cleaning', notes: ['Zero nulls and zero duplicates across 1,500 records.', 'Show the POS Unknown toggle (156 CustomerType, 66 PaymentMode) to demonstrate ₹3.77L revenue impact.'] },
-    { title: 'KPI Dashboard & Monthly Trends', notes: ['Hover over any month to inspect MoM revenue/profit delta.', 'Click any Discount Band bar to cross-filter the entire deck.'] },
-    { title: 'Product & Category Performance', notes: ['Clothing drives 48.6% of revenue; Shoes delivers ₹4,841 AOV (40.3% revenue from 20.2% units); Accessories leads margin at 35.25%.'] },
-    { title: 'Store Matrix & Channel Monetization', notes: ['2x2 Median Matrix segments 50 stores into Strong Performers, Margin Problems, Growth Opportunities, and Needs Investigation.', 'Digital UPI achieves highest AOV (₹2,486) and margin (35.30%).'] },
-    { title: 'Deep-Dive: Main Business Problems', notes: ['Discount elasticity r = -0.0034: high discounts (16-30%) slash margin from 40.21% to 21.54% without increasing units/order.', 'Store_25 logged only 1 shoe order in 2 years vs 11 at Store_16.'] },
-    { title: 'Trends & Seasonality', notes: ['Friday (#1, ₹5.66L) and Monday (#2, ₹5.57L) beat Saturday (₹4.94L).', 'October festive surges (₹2.31L in Oct 2025) require inventory lock by September 15.'] },
-    { title: 'What-If Profit Simulator', notes: ['Model capping unbundled discounts at 15% (₹85K-₹1.0L recovery), footwear rebalancing, accessory attach towers, and UPI/CRM shift.'] },
-    { title: 'Recommendations & Roadmap', notes: ['Contrast 0-30 day Quick Wins vs 1-6 month Structural Initiatives.', 'Click any store row in the Action Register to filter the deck to that store.'] }
+    { title: 'Case Study Overview', notes: ['Introduce FashionWave (50 stores across India) and the core problem: stagnant weekend sales vs steady weekdays.', 'Frame the 3 objectives (+15% weekend sales, product profitability, smart discounting) and 30% policy cap.'] },
+    { title: 'Executive Summary', notes: ['Present the 5 headline KPIs and 3-4 live data-driven findings.', 'Note the Weekend/Weekday sales ratio and 34.78% operating margin.'] },
+    { title: 'Data Overview & Cleaning', notes: ['Show raw blanks: 135 Discount blanks (imputed to 0%), 156 CustomerType blanks & 66 PaymentMode blanks (imputed to Unknown).', 'Verify 0% violations above the 30% discount policy cap.'] },
+    { title: 'Sales KPI Dashboard', notes: ['Point out October festive peaks in the trend chart and how Story Panel numbers update dynamically with slicers.'] },
+    { title: 'Category & Product Performance (Q1)', notes: ['Clothing anchors volume; Shoes drives 40.3% revenue from 20.2% units; Accessories leads margin at 35.25%.', 'Highlight the Volume-vs-Margin quadrant flagging low-margin items.'] },
+    { title: 'Weekend vs Weekday (Q2)', notes: ['Friday (#1) and Monday (#2) beat Saturday. Show how festival weeks lift both weekday and weekend baskets.'] },
+    { title: 'Discount Impact (Q3)', notes: ['Zero volume elasticity (r = -0.0034): 16-30% discounts slash margin from 40.2% to 21.5% without expanding basket size.'] },
+    { title: 'Store Performance (Q4)', notes: ['Contrast Top 10 vs Bottom 10 (7.1x gap between Store_16 and Store_25). Explain hypotheses clearly: footwear mix & order velocity.'] },
+    { title: 'Customer Segmentation (Q5)', notes: ['No CustomerID exists, so segments are built from CustomerType, basket value, discount reliance, and day preference.'] },
+    { title: 'Weekend Growth Simulator', notes: ['Demonstrate how targeted weekend bundles and capped promos close the +15% weekend growth target (indicative scenario only).'] },
+    { title: 'Recommendations Roadmap', notes: ['Walk through Quick Wins (0-30d) vs Long-Term (1-6m) with owners, risks, and success metrics.'] },
+    { title: 'Final Recommendations & Assumptions', notes: ['Close with the Top 5 prioritized actions explicitly linked to Assumptions [A1]-[A6].'] }
   ];
 
-  // =========================================================================
-  // 1. STATE & SINGLE FILTER STORE
-  // =========================================================================
   const state = {
     rawRows: [],
     cleanRows: [],
-    dataSourceLabel: '',
-    cleaningStats: { rawCount: 0, cleanCount: 0, nulls: 0, duplicates: 0, unknownCust: 0, unknownPay: 0 },
+    cleaningStats: { rawCount: 0, cleanCount: 0, blankDisc: 0, blankCust: 0, blankPay: 0, over30: 0, duplicates: 0 },
     currentSlide: 0,
     zoomLevel: 100,
     theme: 'light',
     s5TableView: false,
-    sortCol: 'netRev',
-    sortAsc: false,
+    s8AllStores: false,
     filters: {
-      dateStart: '',
-      dateEnd: '',
-      categories: new Set(),
-      store: '',
-      discountBands: new Set(),
-      customerTypes: new Set(),
-      paymentModes: new Set(),
-      dayTypes: new Set(),
-      daysOfWeek: new Set(),
-      excludeUnknown: false
+      dateStart: '', dateEnd: '',
+      categories: new Set(), store: '', dayTypes: new Set(), daysOfWeek: new Set(),
+      seasons: new Set(), discountBands: new Set(), customerTypes: new Set(),
+      excludeMissing: false
     },
-    sim: {
-      discCap: 30,
-      shoeLift: 0,
-      accAttach: 0,
-      upiShift: 0
-    },
-    chartInstances: new Map(),
+    sim: { wkndDisc: 10, wkndCat: 'All', wkndTraffic: 8, wkndAov: 7 },
     resizeObservers: new Map()
   };
 
-  // =========================================================================
-  // 2. SAFE MATH & FORMATTING HELPERS
-  // =========================================================================
-  const safeDiv = (num, den, fallback = 0) => (den && Number.isFinite(den) && den !== 0 ? num / den : fallback);
+  const safeDiv = (n, d, fb = 0) => (d && Number.isFinite(d) && d !== 0 ? n / d : fb);
 
   function fmtINR(val, compact = false) {
     if (!Number.isFinite(val)) return '₹0';
@@ -86,12 +63,13 @@
     return `${sign}₹${Math.round(abs).toLocaleString('en-IN')}`;
   }
 
-  function fmtNum(val) {
-    return Number.isFinite(val) ? Math.round(val).toLocaleString('en-IN') : '0';
-  }
+  const fmtNum = v => (Number.isFinite(v) ? Math.round(v).toLocaleString('en-IN') : '0');
+  const fmtPct = (v, d = 2) => (Number.isFinite(v) ? `${v.toFixed(d)}%` : '0.00%');
 
-  function fmtPct(val, decimals = 2) {
-    return Number.isFinite(val) ? `${val.toFixed(decimals)}%` : '0.00%';
+  function getSeason(monthNum) {
+    if (monthNum === 10 || monthNum === 11) return 'Festive (Oct-Nov)';
+    if (monthNum === 12 || monthNum === 1) return 'Winter (Dec-Jan)';
+    return 'Regular (Feb-Sep)';
   }
 
   function getDiscountBand(d) {
@@ -101,53 +79,51 @@
     return 'High (16-30%)';
   }
 
-  function getPriceTier(p) {
-    if (p < 800) return 'Budget (<₹800)';
-    if (p < 2000) return 'Mid (₹800-₹1,999)';
-    return 'Premium (₹2,000+)';
-  }
-
   // =========================================================================
-  // 3. DATA LOADING & CLEANING ENGINE
+  // DATA CLEANING & DERIVED FIELDS
   // =========================================================================
   function parseAndClean(rows, sourceName, via) {
     if (!rows || !rows.length) return false;
     const cols = Object.keys(rows[0]);
     const missing = REQUIRED_COLS.filter(c => !cols.includes(c));
-    if (missing.length) {
-      alert(`Missing required columns: ${missing.join(', ')}`);
-      return false;
-    }
+    if (missing.length) { alert(`Missing columns: ${missing.join(', ')}`); return false; }
 
     const seen = new Set();
-    let nulls = 0;
-    let duplicates = 0;
-    let unknownCust = 0;
-    let unknownPay = 0;
+    let blankDisc = 0, blankCust = 0, blankPay = 0, over30 = 0, duplicates = 0;
     const cleaned = [];
 
     for (const r of rows) {
       const inv = String(r.InvoiceNo || '').trim();
-      if (!inv) { nulls++; continue; }
+      if (!inv) continue;
       if (seen.has(inv)) { duplicates++; continue; }
       seen.add(inv);
 
+      const rawDiscStr = String(r.Discount ?? '').trim();
+      const rawCustStr = String(r.CustomerType ?? '').trim();
+      const rawPayStr = String(r.PaymentMode ?? '').trim();
+
+      const hasBlankDisc = rawDiscStr === '';
+      const hasBlankCust = rawCustStr === '';
+      const hasBlankPay = rawPayStr === '';
+      if (hasBlankDisc) blankDisc++;
+      if (hasBlankCust) blankCust++;
+      if (hasBlankPay) blankPay++;
+
       const qty = Number(r.Quantity) || 0;
       const unitPrice = Number(r.UnitPrice) || 0;
-      const discount = Number(r.Discount) || 0;
+      const discount = hasBlankDisc ? 0 : (Number(rawDiscStr) || 0);
+      if (discount > 30) over30++;
       const costPerUnit = Number(r.CostPerUnit) || 0;
-      const cat = String(r.Category || '').trim();
-      const cust = String(r.CustomerType || 'Unknown').trim() || 'Unknown';
-      const pay = String(r.PaymentMode || 'Unknown').trim() || 'Unknown';
-      const dateStr = String(r.Date || '').slice(0, 10);
-
-      if (cust === 'Unknown') unknownCust++;
-      if (pay === 'Unknown') unknownPay++;
+      const cust = hasBlankCust ? 'Unknown' : rawCustStr;
+      const pay = hasBlankPay ? 'Unknown' : rawPayStr;
+      const dateStr = String(r.Date || '').trim().slice(0, 10);
 
       const dt = new Date(dateStr + 'T00:00:00');
-      const dayIdx = (dt.getDay() + 6) % 7; // 0=Mon..6=Sun
+      const monthNum = dt.getMonth() + 1;
+      const dayIdx = (dt.getDay() + 6) % 7;
       const dayOfWeek = DAY_ORDER[dayIdx] || 'Monday';
-      const dayType = (dayIdx >= 5) ? 'Weekend' : 'Weekday';
+      const dayType = dayIdx >= 5 ? 'Weekend' : 'Weekday';
+      const season = getSeason(monthNum);
       const monthKey = dateStr.slice(0, 7);
 
       const grossSales = qty * unitPrice;
@@ -155,81 +131,55 @@
       const netRev = grossSales - discountAmt;
       const totalCost = qty * costPerUnit;
       const profit = netRev - totalCost;
-      const marginPct = safeDiv(profit, netRev) * 100;
 
       cleaned.push({
-        InvoiceNo: inv,
-        Date: dateStr,
-        MonthKey: monthKey,
-        DayOfWeek: dayOfWeek,
-        DayType: dayType,
+        InvoiceNo: inv, Date: dateStr, MonthKey: monthKey, Season: season,
+        DayOfWeek: dayOfWeek, DayType: dayType,
         StoreID: String(r.StoreID || '').trim(),
         ProductID: String(r.ProductID || '').trim(),
-        Category: cat,
-        PriceTier: getPriceTier(unitPrice),
-        Quantity: qty,
-        UnitPrice: unitPrice,
-        Discount: discount,
+        Category: String(r.Category || '').trim(),
+        Quantity: qty, UnitPrice: unitPrice, Discount: discount,
         DiscountBand: getDiscountBand(discount),
-        CostPerUnit: costPerUnit,
-        CustomerType: cust,
-        PaymentMode: pay,
-        GrossSales: grossSales,
-        DiscountAmount: discountAmt,
-        NetRevenue: netRev,
-        TotalCost: totalCost,
-        Profit: profit,
-        ProfitMargin: marginPct
+        CostPerUnit: costPerUnit, CustomerType: cust, PaymentMode: pay,
+        GrossSales: grossSales, DiscountAmount: discountAmt,
+        NetRevenue: netRev, TotalCost: totalCost, Profit: profit,
+        ProfitMargin: safeDiv(profit, netRev) * 100,
+        HasMissingRaw: hasBlankDisc || hasBlankCust || hasBlankPay
       });
     }
 
     state.rawRows = rows;
     state.cleanRows = cleaned;
-    state.cleaningStats = {
-      rawCount: rows.length,
-      cleanCount: cleaned.length,
-      nulls,
-      duplicates,
-      unknownCust,
-      unknownPay
-    };
+    state.cleaningStats = { rawCount: rows.length, cleanCount: cleaned.length, blankDisc, blankCust, blankPay, over30, duplicates };
 
     const dates = cleaned.map(d => d.Date).sort();
     state.filters.dateStart = dates[0] || '2024-11-18';
     state.filters.dateEnd = dates[dates.length - 1] || '2026-11-18';
 
-    state.dataSourceLabel = `Data source: ${sourceName} · ${cleaned.length.toLocaleString('en-IN')} rows · loaded via ${via}`;
-    document.getElementById('data-status-text').textContent = state.dataSourceLabel;
-
+    document.getElementById('data-status-text').textContent = `Data source: ${sourceName} · ${cleaned.length.toLocaleString('en-IN')} rows · loaded via ${via}`;
     initSlicerOptions();
     renderAll();
     return true;
   }
 
   async function loadInitialData() {
-    // 1. Try fetch('./fashionwave_sales_cleaned.csv')
     try {
-      const resp = await fetch('./fashionwave_sales_cleaned.csv');
-      if (resp.ok) {
-        const csvText = await resp.text();
-        if (window.Papa) {
-          const parsed = window.Papa.parse(csvText, { header: true, skipEmptyLines: true });
-          if (parseAndClean(parsed.data, 'fashionwave_sales_cleaned.csv', 'CSV fetch')) return;
-        }
+      const resp = await fetch('./fashionwave_sales.csv');
+      if (resp.ok && window.Papa) {
+        const parsed = window.Papa.parse(await resp.text(), { header: true, skipEmptyLines: true });
+        if (parseAndClean(parsed.data, 'fashionwave_sales.csv', 'CSV fetch')) return;
       }
-    } catch (_) { /* file:// fallback expected */ }
+    } catch (_) {}
 
-    // 2. Fallback to window.RAW_SALES_DATA from ./data.js
-    if (Array.isArray(window.RAW_SALES_DATA) && window.RAW_SALES_DATA.length) {
-      if (parseAndClean(window.RAW_SALES_DATA, 'fashionwave_sales_cleaned.csv', 'backup (data.js)')) return;
+    if (Array.isArray(window.RAW_FASHIONWAVE_CSV) && window.RAW_FASHIONWAVE_CSV.length) {
+      if (parseAndClean(window.RAW_FASHIONWAVE_CSV, 'fashionwave_sales.csv', 'backup (data.js)')) return;
     }
 
-    // 3. Fallback manual drag & drop
     document.getElementById('fallback-loader').classList.add('open');
   }
 
   // =========================================================================
-  // 4. FILTER STORE & PURE AGGREGATIONS
+  // FILTER STORE & PURE AGGREGATIONS
   // =========================================================================
   function getFilteredRows() {
     const f = state.filters;
@@ -238,38 +188,39 @@
       if (f.dateEnd && r.Date > f.dateEnd) return false;
       if (f.categories.size && !f.categories.has(r.Category)) return false;
       if (f.store && r.StoreID !== f.store) return false;
-      if (f.discountBands.size && !f.discountBands.has(r.DiscountBand)) return false;
-      if (f.customerTypes.size && !f.customerTypes.has(r.CustomerType)) return false;
-      if (f.paymentModes.size && !f.paymentModes.has(r.PaymentMode)) return false;
       if (f.dayTypes.size && !f.dayTypes.has(r.DayType)) return false;
       if (f.daysOfWeek.size && !f.daysOfWeek.has(r.DayOfWeek)) return false;
-      if (f.excludeUnknown && (r.CustomerType === 'Unknown' || r.PaymentMode === 'Unknown')) return false;
+      if (f.seasons.size && !f.seasons.has(r.Season)) return false;
+      if (f.discountBands.size && !f.discountBands.has(r.DiscountBand)) return false;
+      if (f.customerTypes.size && !f.customerTypes.has(r.CustomerType)) return false;
+      if (f.excludeMissing && r.HasMissingRaw) return false;
       return true;
     });
   }
 
   function computeSummary(rows) {
     let gross = 0, discAmt = 0, netRev = 0, cost = 0, profit = 0, units = 0, discSum = 0;
+    let wkndRev = 0, wkdyRev = 0, wkndOrders = 0, wkdyOrders = 0;
     const stores = new Set();
     for (const r of rows) {
-      gross += r.GrossSales;
-      discAmt += r.DiscountAmount;
-      netRev += r.NetRevenue;
-      cost += r.TotalCost;
-      profit += r.Profit;
-      units += r.Quantity;
-      discSum += r.Discount;
+      gross += r.GrossSales; discAmt += r.DiscountAmount; netRev += r.NetRevenue;
+      cost += r.TotalCost; profit += r.Profit; units += r.Quantity; discSum += r.Discount;
       stores.add(r.StoreID);
+      if (r.DayType === 'Weekend') { wkndRev += r.NetRevenue; wkndOrders++; }
+      else { wkdyRev += r.NetRevenue; wkdyOrders++; }
     }
     const orders = rows.length;
     return {
-      orders, units, storesCount: stores.size,
-      gross, discAmt, netRev, cost, profit,
+      orders, units, storesCount: stores.size, gross, discAmt, netRev, cost, profit,
       marginPct: safeDiv(profit, netRev) * 100,
       aov: safeDiv(netRev, orders),
       asp: safeDiv(netRev, units),
       avgDisc: safeDiv(discSum, orders),
-      basketSize: safeDiv(units, orders)
+      basketSize: safeDiv(units, orders),
+      wkndRev, wkdyRev, wkndOrders, wkdyOrders,
+      wkndRatio: safeDiv(wkndRev, wkdyRev),
+      wkndShare: safeDiv(wkndRev, netRev) * 100,
+      salesPerStoreWeek: safeDiv(netRev, Math.max(1, stores.size) * 104)
     };
   }
 
@@ -279,23 +230,19 @@
       const k = keyFn(r);
       let g = map.get(k);
       if (!g) {
-        g = { key: k, orders: 0, units: 0, netRev: 0, profit: 0, gross: 0, cost: 0, discSum: 0, shoeOrders: 0 };
+        g = { key: k, orders: 0, units: 0, netRev: 0, profit: 0, gross: 0, discSum: 0, wkndRev: 0, shoeOrders: 0 };
         map.set(k, g);
       }
-      g.orders++;
-      g.units += r.Quantity;
-      g.netRev += r.NetRevenue;
-      g.profit += r.Profit;
-      g.gross += r.GrossSales;
-      g.cost += r.TotalCost;
-      g.discSum += r.Discount;
+      g.orders++; g.units += r.Quantity; g.netRev += r.NetRevenue; g.profit += r.Profit;
+      g.gross += r.GrossSales; g.discSum += r.Discount;
+      if (r.DayType === 'Weekend') g.wkndRev += r.NetRevenue;
       if (r.Category === 'Shoes') g.shoeOrders++;
     }
     for (const g of map.values()) {
       g.marginPct = safeDiv(g.profit, g.netRev) * 100;
       g.aov = safeDiv(g.netRev, g.orders);
-      g.asp = safeDiv(g.netRev, g.units);
       g.avgDisc = safeDiv(g.discSum, g.orders);
+      g.wkndShare = safeDiv(g.wkndRev, g.netRev) * 100;
     }
     return map;
   }
@@ -304,26 +251,41 @@
     const n = xs.length;
     if (n < 2) return 0;
     let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
-    for (let i = 0; i < n; i++) {
-      sx += xs[i]; sy += ys[i];
-      sxx += xs[i] * xs[i]; syy += ys[i] * ys[i]; sxy += xs[i] * ys[i];
-    }
-    const den = Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy));
-    return safeDiv(n * sxy - sx * sy, den);
+    for (let i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i]*xs[i]; syy += ys[i]*ys[i]; sxy += xs[i]*ys[i]; }
+    return safeDiv(n * sxy - sx * sy, Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy)));
   }
 
   // =========================================================================
-  // 5. RICH TOOLTIP ENGINE (CHARTS + FLOATING UI ELEMENTS)
+  // TOOLTIPS & STORY PANEL BUILDER
   // =========================================================================
   function ttCard(title, rows) {
-    const body = rows.map(r => `
-      <div class="tt-row">
-        <span class="tt-lbl">${r.color ? `<span class="tt-dot" style="background:${r.color}"></span>` : ''}${r.label}</span>
-        <span class="tt-val">${r.value}</span>
-      </div>`).join('');
     return `<div style="max-width:270px; font-family:Inter,sans-serif; font-size:12px; line-height:1.4;">
-      <div class="tt-title">${title}</div>${body}
+      <div class="tt-title">${title}</div>
+      ${rows.map(r => `<div class="tt-row"><span class="tt-lbl">${r.color ? `<span class="tt-dot" style="background:${r.color}"></span>` : ''}${r.label}</span><span class="tt-val">${r.value}</span></div>`).join('')}
     </div>`;
+  }
+
+  function renderStoryPanel(elId, { keyLabel, keyValue, keySub, bullets, why, actionLabel, actionText }) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = `
+      <div class="story-key-card">
+        <span class="story-key-label">${keyLabel}</span>
+        <span class="story-key-value">${keyValue}</span>
+        <span class="story-key-sub">${keySub}</span>
+      </div>
+      <div class="story-section">
+        <span class="story-section-hdr">What the data shows</span>
+        <ul class="story-bullets">${bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+      </div>
+      <div class="story-section">
+        <span class="story-section-hdr">Why it matters</span>
+        <div class="story-why">${why}</div>
+      </div>
+      <div class="story-action-box">
+        <span class="action-chip">${actionLabel}</span>
+        <span class="story-action-text">${actionText}</span>
+      </div>`;
   }
 
   const floatingTip = document.getElementById('fw-floating-tooltip');
@@ -331,40 +293,34 @@
     floatingTip.innerHTML = ttCard(title, rows);
     floatingTip.classList.add('visible');
     const rect = targetEl.getBoundingClientRect();
-    const tw = floatingTip.offsetWidth || 260;
-    const th = floatingTip.offsetHeight || 90;
-    let left = rect.left + rect.width / 2 - tw / 2;
+    const tw = floatingTip.offsetWidth || 260, th = floatingTip.offsetHeight || 90;
+    let left = Math.max(12, Math.min(window.innerWidth - tw - 12, rect.left + rect.width / 2 - tw / 2));
     let top = rect.bottom + 8;
-    if (left + tw > window.innerWidth - 12) left = window.innerWidth - tw - 12;
-    if (left < 12) left = 12;
     if (top + th > window.innerHeight - 12) top = rect.top - th - 8;
     floatingTip.style.left = `${left}px`;
     floatingTip.style.top = `${top}px`;
   }
-
-  function hideFloatingTip() {
-    floatingTip.classList.remove('visible');
-  }
+  const hideFloatingTip = () => floatingTip.classList.remove('visible');
 
   function bindFloatingTooltips() {
     document.querySelectorAll('[data-info]').forEach(el => {
-      el.onmouseenter = () => showFloatingTip(el, 'How to Read This Chart', [{ label: 'Explanation', value: '' }, { label: el.dataset.info, value: '' }]);
+      el.onmouseenter = () => showFloatingTip(el, 'How to Read This Chart', [{ label: el.dataset.info, value: '' }]);
       el.onmouseleave = hideFloatingTip;
     });
-
     document.querySelectorAll('[data-kpi-tip]').forEach(el => {
-      el.onmouseenter = () => {
-        try {
-          const info = JSON.parse(el.dataset.kpiTip);
-          showFloatingTip(el, info.title, info.rows);
-        } catch (_) {}
-      };
+      el.onmouseenter = () => { try { const i = JSON.parse(el.dataset.kpiTip); showFloatingTip(el, i.title, i.rows); } catch (_) {} };
       el.onmouseleave = hideFloatingTip;
+    });
+    document.querySelectorAll('table.bi-table td').forEach(td => {
+      if (td.scrollWidth > td.clientWidth) {
+        td.onmouseenter = () => showFloatingTip(td, 'Full Value', [{ label: td.textContent, value: '' }]);
+        td.onmouseleave = hideFloatingTip;
+      }
     });
   }
 
   // =========================================================================
-  // 6. ECHARTS INITIALIZATION, ERROR BOUNDARY & RESIZE OBSERVER
+  // ECHARTS ENGINE WITH LAZY INIT & RESIZE OBSERVER
   // =========================================================================
   function getThemeColors() {
     const dark = state.theme === 'dark';
@@ -380,17 +336,15 @@
   function renderChart(containerId, optionBuilder, hasData = true, onClickHandler = null) {
     const el = document.getElementById(containerId);
     if (!el) return;
-
-    // Dispose or clear old empty state
-    const existingEmpty = el.querySelector('.chart-empty-state');
-    if (existingEmpty) existingEmpty.remove();
+    const oldEmpty = el.querySelector('.chart-empty-state');
+    if (oldEmpty) oldEmpty.remove();
 
     if (!hasData || !window.echarts) {
       const inst = window.echarts ? window.echarts.getInstanceByDom(el) : null;
       if (inst) inst.clear();
       const empty = document.createElement('div');
       empty.className = 'chart-empty-state';
-      empty.innerHTML = `<strong style="font-size:14px;">No data for this selection</strong><span>Adjust or reset your active slicers to restore visuals.</span>`;
+      empty.innerHTML = `<strong>No data for this selection</strong><span>Reset or adjust active slicers.</span>`;
       el.appendChild(empty);
       return;
     }
@@ -399,8 +353,6 @@
       let chart = window.echarts.getInstanceByDom(el);
       if (!chart) {
         chart = window.echarts.init(el);
-        state.chartInstances.set(containerId, chart);
-
         if (!state.resizeObservers.has(containerId)) {
           let raf;
           const ro = new ResizeObserver(() => {
@@ -414,10 +366,9 @@
           state.resizeObservers.set(containerId, ro);
         }
       }
-
       const tc = getThemeColors();
       const opt = optionBuilder(tc);
-      opt.animationDuration = 350;
+      opt.animationDuration = 320;
       if (opt.tooltip) {
         opt.tooltip.confine = true;
         opt.tooltip.backgroundColor = tc.tooltipBg;
@@ -428,114 +379,84 @@
       }
       chart.setOption(opt, true);
       chart.off('click');
-      if (onClickHandler) {
-        chart.on('click', onClickHandler);
-      }
+      if (onClickHandler) chart.on('click', onClickHandler);
     } catch (err) {
-      console.error(`Chart render error (${containerId}):`, err);
       el.innerHTML = `<div class="chart-empty-state"><strong>Visual Error</strong><span>${err.message}</span></div>`;
     }
   }
 
   function resizeActiveSlideCharts() {
-    const activeSlide = document.querySelector('.slide.active');
-    if (!activeSlide) return;
-    activeSlide.querySelectorAll('.chart-container, .chart-container-tall').forEach(el => {
-      const inst = window.echarts ? window.echarts.getInstanceByDom(el) : null;
+    const active = document.querySelector('.slide.active');
+    if (!active || !window.echarts) return;
+    active.querySelectorAll('.chart-container').forEach(el => {
+      const inst = window.echarts.getInstanceByDom(el);
       if (inst && el.offsetWidth > 0 && el.offsetHeight > 0) inst.resize();
     });
   }
 
   // =========================================================================
-  // 7. SLICER UI & CROSS-FILTERING
+  // SLICERS
   // =========================================================================
-  function toggleSetFilter(setObj, val) {
-    if (setObj.has(val)) setObj.delete(val);
-    else setObj.add(val);
+  function toggleSet(setObj, val) {
+    if (setObj.has(val)) setObj.delete(val); else setObj.add(val);
     renderAll();
   }
 
   function initSlicerOptions() {
-    // Store dropdown
     const storeSel = document.getElementById('filter-store-select');
     const stores = [...new Set(state.cleanRows.map(r => r.StoreID))].sort();
-    storeSel.innerHTML = `<option value="">All ${stores.length} Stores</option>` +
-      stores.map(s => `<option value="${s}">${s}</option>`).join('');
-
-    // Date inputs
+    storeSel.innerHTML = `<option value="">All ${stores.length} Stores</option>` + stores.map(s => `<option value="${s}">${s}</option>`).join('');
     const dates = state.cleanRows.map(r => r.Date).sort();
-    const dStart = document.getElementById('filter-date-start');
-    const dEnd = document.getElementById('filter-date-end');
-    dStart.min = dates[0]; dStart.max = dates[dates.length - 1]; dStart.value = state.filters.dateStart;
-    dEnd.min = dates[0]; dEnd.max = dates[dates.length - 1]; dEnd.value = state.filters.dateEnd;
-
+    document.getElementById('filter-date-start').value = state.filters.dateStart = dates[0];
+    document.getElementById('filter-date-end').value = state.filters.dateEnd = dates[dates.length - 1];
     renderSlicerChips();
   }
 
   function renderSlicerChips() {
     const rows = state.cleanRows;
-    const renderGroup = (containerId, values, filterSet, countsMap) => {
-      const wrap = document.getElementById(containerId);
-      wrap.innerHTML = values.map(v => {
-        const active = filterSet.has(v) ? 'active' : '';
-        const cnt = countsMap.get(v) || 0;
-        return `<button class="slicer-chip ${active}" data-val="${v}" title="${v}: ${cnt} orders — Click to filter">
-          <span>${v}</span><span class="chip-count">${cnt}</span>
-        </button>`;
-      }).join('');
-      wrap.querySelectorAll('.slicer-chip').forEach(btn => {
-        btn.onclick = () => toggleSetFilter(filterSet, btn.dataset.val);
-      });
+    const renderGroup = (id, vals, setObj, fn) => {
+      const cnts = new Map();
+      rows.forEach(r => { const k = fn(r); cnts.set(k, (cnts.get(k) || 0) + 1); });
+      const wrap = document.getElementById(id);
+      wrap.innerHTML = vals.map(v => `<button class="slicer-chip ${setObj.has(v) ? 'active' : ''}" data-val="${v}" title="${v}: ${cnts.get(v)||0} rows — Click to filter"><span>${v}</span><span class="chip-count">${cnts.get(v)||0}</span></button>`).join('');
+      wrap.querySelectorAll('.slicer-chip').forEach(b => b.onclick = () => toggleSet(setObj, b.dataset.val));
     };
-
-    const countField = (fn) => {
-      const m = new Map();
-      rows.forEach(r => { const k = fn(r); m.set(k, (m.get(k) || 0) + 1); });
-      return m;
-    };
-
-    renderGroup('slicer-category-chips', ['Clothing', 'Shoes', 'Accessories'], state.filters.categories, countField(r => r.Category));
-    renderGroup('slicer-discount-chips', BAND_ORDER, state.filters.discountBands, countField(r => r.DiscountBand));
-    renderGroup('slicer-customer-chips', ['Returning', 'New', 'Unknown'], state.filters.customerTypes, countField(r => r.CustomerType));
-    renderGroup('slicer-payment-chips', ['Card', 'Cash', 'Digital', 'Unknown'], state.filters.paymentModes, countField(r => r.PaymentMode));
-    renderGroup('slicer-daytype-chips', ['Weekday', 'Weekend'], state.filters.dayTypes, countField(r => r.DayType));
+    renderGroup('slicer-category-chips', ['Clothing', 'Shoes', 'Accessories'], state.filters.categories, r => r.Category);
+    renderGroup('slicer-daytype-chips', ['Weekday', 'Weekend'], state.filters.dayTypes, r => r.DayType);
+    renderGroup('slicer-season-chips', SEASON_ORDER, state.filters.seasons, r => r.Season);
+    renderGroup('slicer-discount-chips', BAND_ORDER, state.filters.discountBands, r => r.DiscountBand);
+    renderGroup('slicer-customer-chips', ['Returning', 'New', 'Unknown'], state.filters.customerTypes, r => r.CustomerType);
   }
 
-  function renderFilterPills(filteredCount) {
-    document.getElementById('slicer-row-counter').textContent =
-      `${filteredCount.toLocaleString('en-IN')} of ${state.cleanRows.length.toLocaleString('en-IN')} rows`;
-
-    const pills = [];
-    const f = state.filters;
-    f.categories.forEach(v => pills.push({ label: `Cat: ${v}`, clear: () => f.categories.delete(v) }));
-    if (f.store) pills.push({ label: `Store: ${f.store}`, clear: () => { f.store = ''; document.getElementById('filter-store-select').value = ''; } });
-    f.discountBands.forEach(v => pills.push({ label: `Disc: ${v}`, clear: () => f.discountBands.delete(v) }));
-    f.customerTypes.forEach(v => pills.push({ label: `Cust: ${v}`, clear: () => f.customerTypes.delete(v) }));
-    f.paymentModes.forEach(v => pills.push({ label: `Pay: ${v}`, clear: () => f.paymentModes.delete(v) }));
-    f.dayTypes.forEach(v => pills.push({ label: `Day: ${v}`, clear: () => f.dayTypes.delete(v) }));
-    f.daysOfWeek.forEach(v => pills.push({ label: `DoW: ${v}`, clear: () => f.daysOfWeek.delete(v) }));
-    if (f.excludeUnknown) pills.push({ label: `Exclude Unknowns`, clear: () => { f.excludeUnknown = false; document.getElementById('toggle-exclude-unknown').checked = false; } });
+  function renderFilterPills(count) {
+    document.getElementById('slicer-row-counter').textContent = `${fmtNum(count)} of ${fmtNum(state.cleanRows.length)} rows`;
+    const f = state.filters, pills = [];
+    f.categories.forEach(v => pills.push({ l: `Cat: ${v}`, c: () => f.categories.delete(v) }));
+    if (f.store) pills.push({ l: `Store: ${f.store}`, c: () => { f.store = ''; document.getElementById('filter-store-select').value = ''; } });
+    f.dayTypes.forEach(v => pills.push({ l: `Day: ${v}`, c: () => f.dayTypes.delete(v) }));
+    f.daysOfWeek.forEach(v => pills.push({ l: `DoW: ${v}`, c: () => f.daysOfWeek.delete(v) }));
+    f.seasons.forEach(v => pills.push({ l: `${v}`, c: () => f.seasons.delete(v) }));
+    f.discountBands.forEach(v => pills.push({ l: `${v}`, c: () => f.discountBands.delete(v) }));
+    f.customerTypes.forEach(v => pills.push({ l: `Cust: ${v}`, c: () => f.customerTypes.delete(v) }));
+    if (f.excludeMissing) pills.push({ l: `Exclude Raw Blanks`, c: () => { f.excludeMissing = false; document.getElementById('toggle-exclude-missing').checked = false; } });
 
     const wrap = document.getElementById('active-filter-pills');
-    wrap.innerHTML = pills.map((p, i) => `<span class="filter-pill" data-pidx="${i}">${p.label} ✕</span>`).join('');
-    wrap.querySelectorAll('.filter-pill').forEach(el => {
-      el.onclick = () => { pills[Number(el.dataset.pidx)].clear(); renderAll(); };
-    });
+    wrap.innerHTML = pills.map((p, i) => `<span class="filter-pill" data-i="${i}">${p.l} ✕</span>`).join('');
+    wrap.querySelectorAll('.filter-pill').forEach(el => el.onclick = () => { pills[Number(el.dataset.i)].c(); renderAll(); });
   }
 
   // =========================================================================
-  // 8. MASTER RENDER PIPELINE (ALL 10 SLIDES)
+  // RENDER ALL 12 SLIDES
   // =========================================================================
   function renderAll() {
     renderSlicerChips();
     const rows = getFilteredRows();
     renderFilterPills(rows.length);
-
     const sum = computeSummary(rows);
-    const baseSum = computeSummary(state.cleanRows);
+    const base = computeSummary(state.cleanRows);
 
-    renderSlide1(rows, sum, baseSum);
-    renderSlide3(rows, sum);
+    renderSlide2(rows, sum, base);
+    renderSlide3(rows);
     renderSlide4(rows, sum);
     renderSlide5(rows, sum);
     renderSlide6(rows, sum);
@@ -548,769 +469,458 @@
     updateDiagnostics();
   }
 
-  // --- SLIDE 1: EXECUTIVE SUMMARY ---
-  function renderSlide1(rows, sum, baseSum) {
-    const sub = document.getElementById('s1-hero-subtitle');
-    sub.textContent = `Active Scope: ${fmtNum(sum.orders)} Transactions across ${sum.storesCount} Stores generating ${fmtINR(sum.netRev, true)} Net Revenue (${fmtPct(sum.marginPct)} Margin) and ${fmtINR(sum.profit, true)} Operating Profit.`;
-
-    const cards = [
-      { label: 'Net Revenue', val: fmtINR(sum.netRev, true), sub: `${fmtINR(sum.gross, true)} Gross Sales`, tip: { title: 'Net Realized Revenue', rows: [{ label: 'Formula', value: 'Gross − Discounts' }, { label: 'Filtered Value', value: fmtINR(sum.netRev) }, { label: 'Baseline Total', value: fmtINR(baseSum.netRev) }] } },
-      { label: 'Operating Profit', val: fmtINR(sum.profit, true), sub: `${fmtINR(sum.cost, true)} Total COGS`, tip: { title: 'Net Operating Profit', rows: [{ label: 'Formula', value: 'NetRev − (Qty × Cost)' }, { label: 'Filtered Value', value: fmtINR(sum.profit) }, { label: 'Baseline Total', value: fmtINR(baseSum.profit) }] } },
-      { label: 'Operating Margin', val: fmtPct(sum.marginPct), sub: 'Target Benchmark: 35.0%', tip: { title: 'Operating Profit Margin %', rows: [{ label: 'Formula', value: '(Profit / NetRev) × 100' }, { label: 'Filtered', value: fmtPct(sum.marginPct) }, { label: 'Baseline', value: fmtPct(baseSum.marginPct) }] } },
-      { label: 'Transactions', val: fmtNum(sum.orders), sub: `${fmtNum(sum.units)} Units Sold`, tip: { title: 'Transaction Volume', rows: [{ label: 'Definition', value: 'Validated Invoices' }, { label: 'Basket Size', value: `${sum.basketSize.toFixed(2)} units` }] } },
-      { label: 'Average Order Value', val: fmtINR(sum.aov), sub: `${fmtINR(sum.asp)} Unit ASP`, tip: { title: 'Average Order Value (AOV)', rows: [{ label: 'Formula', value: 'NetRev / Orders' }, { label: 'Filtered AOV', value: fmtINR(sum.aov) }, { label: 'Baseline AOV', value: fmtINR(baseSum.aov) }] } }
+  // --- SLIDE 2: EXECUTIVE SUMMARY ---
+  function renderSlide2(rows, sum, base) {
+    const kpis = [
+      { cls: '', l: 'Total Sales (Net)', v: fmtINR(sum.netRev, true), b: `${fmtINR(sum.salesPerStoreWeek, true)}/store/wk`, s: `${fmtNum(sum.orders)} orders · ${sum.storesCount} stores`, tip: { title: 'Total Net Sales', rows: [{ label: 'Formula', value: 'Gross × (1 − Disc%)' }, { label: 'Filtered', value: fmtINR(sum.netRev) }, { label: 'Baseline', value: fmtINR(base.netRev) }] } },
+      { cls: 'kpi-teal', l: 'Average Order Value', v: fmtINR(sum.aov), b: `${fmtINR(sum.asp)} ASP`, s: `${sum.basketSize.toFixed(2)} units / order`, tip: { title: 'Average Order Value', rows: [{ label: 'Formula', value: 'Net Revenue / Orders' }, { label: 'Filtered', value: fmtINR(sum.aov) }, { label: 'Baseline', value: fmtINR(base.aov) }] } },
+      { cls: 'kpi-green', l: 'Profit Margin %', v: fmtPct(sum.marginPct), b: fmtINR(sum.profit, true), s: 'Target Benchmark: 35.0%', tip: { title: 'Operating Profit Margin', rows: [{ label: 'Formula', value: '(Profit / NetRev) × 100' }, { label: 'Filtered', value: fmtPct(sum.marginPct) }, { label: 'Baseline', value: fmtPct(base.marginPct) }] } },
+      { cls: 'kpi-gold', l: 'Units Sold', v: fmtNum(sum.units), b: `${fmtPct(sum.avgDisc)} Avg Disc`, s: 'Across 3 product categories', tip: { title: 'Total Units Sold', rows: [{ label: 'Sum of Quantity', value: fmtNum(sum.units) }, { label: 'Baseline', value: fmtNum(base.units) }] } },
+      { cls: 'kpi-rose', l: 'Weekend / Weekday Ratio', v: `${sum.wkndRatio.toFixed(2)}x`, b: `${fmtPct(sum.wkndShare, 1)} Wknd Share`, s: `${fmtINR(sum.wkndRev, true)} vs ${fmtINR(sum.wkdyRev, true)}`, tip: { title: 'Weekend / Weekday Sales Ratio', rows: [{ label: 'Formula', value: 'Weekend Rev / Weekday Rev' }, { label: 'Weekend Rev', value: fmtINR(sum.wkndRev) }, { label: 'Weekday Rev', value: fmtINR(sum.wkdyRev) }] } }
     ];
-
-    document.getElementById('s1-hero-kpis').innerHTML = cards.map(c => `
-      <div class="frosted-kpi-card" data-kpi-tip='${JSON.stringify(c.tip).replace(/'/g, "&apos;")}'>
-        <span class="kpi-label">${c.label}</span>
-        <span class="kpi-value">${c.val}</span>
-        <span class="kpi-sub">${c.sub}</span>
+    document.getElementById('s2-kpi-cards').innerHTML = kpis.map(k => `
+      <div class="kpi-card ${k.cls}" data-kpi-tip='${JSON.stringify(k.tip).replace(/'/g, "&apos;")}'>
+        <div class="kpi-header-row"><span class="kpi-label">${k.l}</span><span class="kpi-delta-badge neutral">${k.b}</span></div>
+        <div class="kpi-val-row"><span class="kpi-value">${k.v}</span></div>
+        <span class="kpi-sub">${k.s}</span>
       </div>`).join('');
 
-    // Gauge
-    renderChart('s1-chart-gauge', tc => ({
-      tooltip: {
-        formatter: () => ttCard('Operating Margin Gauge', [
-          { color: '#7C3AED', label: 'Current Margin', value: fmtPct(sum.marginPct) },
-          { color: '#059669', label: 'Target Benchmark', value: '35.00%' },
-          { label: 'Gap vs Target', value: `${(sum.marginPct - 35).toFixed(2)} pp` }
-        ])
-      },
+    renderChart('s2-chart-gauge', tc => ({
+      tooltip: { formatter: () => ttCard('Operating Margin', [{ color: '#7C3AED', label: 'Current', value: fmtPct(sum.marginPct) }, { color: '#059669', label: 'Target', value: '35.00%' }]) },
       series: [{
-        type: 'gauge',
-        startAngle: 195, endAngle: -15,
-        min: 0, max: 50,
-        progress: { show: true, width: 16, roundCap: true, itemStyle: { color: sum.marginPct >= 35 ? '#059669' : '#7C3AED' } },
-        axisLine: { lineStyle: { width: 16, color: [[1, tc.grid]] } },
-        pointer: { show: false },
-        axisTick: { show: false }, splitLine: { show: false },
-        axisLabel: { show: false },
-        detail: { valueAnimation: true, formatter: v => `${v.toFixed(2)}%`, color: tc.title, fontSize: 26, fontWeight: 800, offsetCenter: [0, '6%'] },
+        type: 'gauge', startAngle: 195, endAngle: -15, min: 0, max: 50,
+        progress: { show: true, width: 14, roundCap: true, itemStyle: { color: sum.marginPct >= 35 ? '#059669' : '#7C3AED' } },
+        axisLine: { lineStyle: { width: 14, color: [[1, tc.grid]] } },
+        pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+        detail: { formatter: v => `${v.toFixed(2)}%`, color: tc.title, fontSize: 24, fontWeight: 800, offsetCenter: [0, '6%'] },
         data: [{ value: Number(sum.marginPct.toFixed(2)) }]
       }]
     }), rows.length > 0);
+    document.getElementById('s2-insight-gauge').innerHTML = `Blended margin is <strong>${fmtPct(sum.marginPct)}</strong> (${fmtINR(sum.profit, true)} profit).`;
 
-    document.getElementById('s1-insight-gauge').innerHTML =
-      `Operating margin stands at <strong>${fmtPct(sum.marginPct)}</strong> (${sum.marginPct >= 35 ? 'above' : 'slightly below'} the 35.0% target by <strong>${Math.abs(sum.marginPct - 35).toFixed(2)} pp</strong>).`;
-
-    // Category Donut
     const catMap = groupBy(rows, r => r.Category);
-    const catData = [...catMap.values()].sort((a, b) => b.netRev - a.netRev);
-    renderChart('s1-chart-donut', tc => ({
-      tooltip: {
-        trigger: 'item',
-        formatter: p => {
-          const d = p.data.raw;
-          return ttCard(d.key, [
-            { color: CAT_COLORS[d.key], label: 'Net Revenue', value: fmtINR(d.netRev) },
-            { label: 'Share of Total', value: fmtPct(safeDiv(d.netRev, sum.netRev) * 100, 1) },
-            { label: 'Operating Profit', value: fmtINR(d.profit) },
-            { label: 'Margin %', value: fmtPct(d.marginPct) }
-          ]);
-        }
-      },
-      legend: { bottom: 0, textStyle: { color: tc.text, fontSize: 12 } },
+    const cats = [...catMap.values()].sort((a, b) => b.netRev - a.netRev);
+    renderChart('s2-chart-donut', tc => ({
+      tooltip: { trigger: 'item', formatter: p => ttCard(p.name, [{ color: CAT_COLORS[p.name], label: 'Net Revenue', value: fmtINR(p.data.raw.netRev) }, { label: 'Share', value: fmtPct(safeDiv(p.data.raw.netRev, sum.netRev) * 100, 1) }, { label: 'Margin', value: fmtPct(p.data.raw.marginPct) }]) },
+      legend: { bottom: 0, textStyle: { color: tc.text, fontSize: 11 } },
       series: [{
-        type: 'pie', radius: ['48%', '74%'], center: ['50%', '44%'],
-        itemStyle: { borderRadius: 6, borderColor: tc.tooltipBg, borderWidth: 2 },
-        label: { show: false },
-        emphasis: { scale: true, scaleSize: 6 },
-        data: catData.map(d => ({
-          name: d.key, value: Math.round(d.netRev), raw: d,
-          itemStyle: { color: CAT_COLORS[d.key] || '#6366F1', opacity: (!state.filters.categories.size || state.filters.categories.has(d.key)) ? 1 : 0.35 }
-        }))
+        type: 'pie', radius: ['48%', '74%'], center: ['50%', '43%'], label: { show: false },
+        itemStyle: { borderRadius: 5, borderColor: tc.tooltipBg, borderWidth: 2 },
+        data: cats.map(c => ({ name: c.key, value: Math.round(c.netRev), raw: c, itemStyle: { color: CAT_COLORS[c.key] || '#6366F1' } }))
       }],
-      graphic: [{
-        type: 'text', left: 'center', top: '38%',
-        style: { text: fmtINR(sum.netRev, true), font: '800 18px Inter,sans-serif', fill: tc.title },
-      }, {
-        type: 'text', left: 'center', top: '49%',
-        style: { text: 'Net Revenue', font: '600 11px Inter,sans-serif', fill: tc.text },
-      }]
-    }), rows.length > 0, p => toggleSetFilter(state.filters.categories, p.name));
+      graphic: [{ type: 'text', left: 'center', top: '38%', style: { text: fmtINR(sum.netRev, true), font: '800 17px Inter,sans-serif', fill: tc.title } }]
+    }), rows.length > 0, p => toggleSet(state.filters.categories, p.name));
+    document.getElementById('s2-insight-donut').innerHTML = cats[0] ? `<strong>${cats[0].key}</strong> leads with <strong>${fmtPct(safeDiv(cats[0].netRev, sum.netRev) * 100, 1)}</strong> revenue share.` : 'No data.';
 
-    const topCat = catData[0];
-    document.getElementById('s1-insight-donut').innerHTML = topCat
-      ? `<strong>${topCat.key}</strong> leads with <strong>${fmtINR(topCat.netRev, true)}</strong> (${fmtPct(safeDiv(topCat.netRev, sum.netRev) * 100, 1)} share) at <strong>${fmtPct(topCat.marginPct)}</strong> margin.`
-      : 'No category data available.';
+    const noDisc = rows.filter(r => r.Discount === 0), hiDisc = rows.filter(r => r.Discount >= 16);
+    const m0 = safeDiv(noDisc.reduce((a, b) => a + b.Profit, 0), noDisc.reduce((a, b) => a + b.NetRevenue, 0)) * 100;
+    const mHi = safeDiv(hiDisc.reduce((a, b) => a + b.Profit, 0), hiDisc.reduce((a, b) => a + b.NetRevenue, 0)) * 100;
+    document.getElementById('s2-key-findings').innerHTML = `
+      <li><strong>Weekend Stagnation:</strong> Weekends represent <strong>${fmtPct(sum.wkndShare, 1)}</strong> of revenue (ratio <strong>${sum.wkndRatio.toFixed(2)}x</strong> vs weekdays).</li>
+      <li><strong>Discount Margin Erosion:</strong> Margin falls from <strong>${fmtPct(m0)}</strong> (0% off) to <strong>${fmtPct(mHi)}</strong> on 16–30% discounts.</li>
+      <li><strong>Category Roles:</strong> Shoes drives <strong>₹4,841</strong> AOV while Accessories yields top margin.</li>
+      <li><strong>Store Dispersion:</strong> Footwear inventory gaps explain the 7x spread between top and bottom stores.</li>`;
   }
 
-  // --- SLIDE 3: DATA OVERVIEW & CLEANING ---
-  function renderSlide3(rows, sum) {
+  // --- SLIDE 3: DATA CLEANING ---
+  function renderSlide3(rows) {
     const cs = state.cleaningStats;
-    const unknownRev = state.cleanRows.filter(r => r.CustomerType === 'Unknown' || r.PaymentMode === 'Unknown').reduce((a, b) => a + b.NetRevenue, 0);
-
     document.getElementById('s3-hygiene-kpis').innerHTML = [
-      { cls: 'kpi-green', label: 'Validated Records', val: fmtNum(cs.cleanCount), badge: `${cs.nulls} Nulls · ${cs.duplicates} Dupes`, sub: `100% of ${cs.rawCount} raw rows retained` },
-      { cls: 'kpi-rose', label: 'Unknown CustomerTag', val: fmtNum(cs.unknownCust), badge: fmtPct(safeDiv(cs.unknownCust, cs.cleanCount) * 100, 1), sub: 'CRM phone capture gap at POS' },
-      { cls: 'kpi-gold', label: 'Unknown PaymentMode', val: fmtNum(cs.unknownPay), badge: fmtPct(safeDiv(cs.unknownPay, cs.cleanCount) * 100, 1), sub: 'Tender tagging gap at billing' },
-      { cls: 'kpi-teal', label: 'Active Filtered Rows', val: fmtNum(rows.length), badge: state.filters.excludeUnknown ? 'Unknowns Excluded' : 'Unknowns Retained', sub: `${fmtINR(unknownRev, true)} tied to Unknown tags` }
-    ].map(k => `
-      <div class="kpi-card ${k.cls}" data-kpi-tip='${JSON.stringify({ title: k.label, rows: [{ label: 'Value', value: k.val }, { label: 'Context', value: k.sub }] })}'>
-        <div class="kpi-header-row"><span class="kpi-label">${k.label}</span><span class="kpi-delta-badge neutral">${k.badge}</span></div>
-        <div class="kpi-val-row"><span class="kpi-value">${k.val}</span></div>
-        <span class="kpi-sub">${k.sub}</span>
-      </div>`).join('');
+      { cls: 'kpi-green', l: 'Raw -> Active Rows', v: `${fmtNum(rows.length)} / ${fmtNum(cs.rawCount)}`, b: `${cs.duplicates} Dupes`, s: state.filters.excludeMissing ? 'Excluding raw blanks' : 'Imputed defaults active' },
+      { cls: 'kpi-gold', l: 'Missing Discount (Raw)', v: fmtNum(cs.blankDisc), b: fmtPct(safeDiv(cs.blankDisc, cs.rawCount) * 100, 1), s: 'Default cleaning: Blank → 0%' },
+      { cls: 'kpi-rose', l: 'Missing CustomerType', v: fmtNum(cs.blankCust), b: fmtPct(safeDiv(cs.blankCust, cs.rawCount) * 100, 1), s: 'Default cleaning: Blank → "Unknown"' },
+      { cls: 'kpi-teal', l: 'Discounts > 30% Policy', v: fmtNum(cs.over30), b: cs.over30 === 0 ? '100% Compliant' : 'Violation', s: 'Corporate max discount cap = 30%' }
+    ].map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-header-row"><span class="kpi-label">${k.l}</span><span class="kpi-delta-badge neutral">${k.b}</span></div><div class="kpi-val-row"><span class="kpi-value">${k.v}</span></div><span class="kpi-sub">${k.s}</span></div>`).join('');
 
-    const bandMap = groupBy(rows, r => r.DiscountBand);
-    const bandList = BAND_ORDER.map(b => bandMap.get(b) || { key: b, orders: 0, netRev: 0, profit: 0, marginPct: 0 });
-    const avgOrders = safeDiv(rows.length, bandList.length);
-
+    const labels = ['Blank Discount', 'Blank CustomerType', 'Blank PaymentMode', 'Discounts > 30%'];
+    const vals = [cs.blankDisc, cs.blankCust, cs.blankPay, cs.over30];
     renderChart('s3-chart-audit', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => {
-          const d = bandList[params[0].dataIndex];
-          return ttCard(d.key, [
-            { color: '#7C3AED', label: 'Orders', value: fmtNum(d.orders) },
-            { label: 'Share of Orders', value: fmtPct(safeDiv(d.orders, rows.length) * 100, 1) },
-            { label: 'vs Band Average', value: `${(d.orders - avgOrders) >= 0 ? '+' : ''}${Math.round(d.orders - avgOrders)} orders` },
-            { label: 'Net Revenue', value: fmtINR(d.netRev) }
-          ]);
-        }
-      },
-      grid: { left: 48, right: 20, top: 24, bottom: 32 },
-      xAxis: { type: 'category', data: BAND_ORDER, axisLabel: { color: tc.text, fontSize: 12 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 11 }, splitLine: { lineStyle: { color: tc.grid } } },
-      series: [{
-        type: 'bar', barMaxWidth: 48,
-        itemStyle: { borderRadius: [6, 6, 0, 0], color: p => ['#059669', '#0D9488', '#D97706', '#DC2626'][p.dataIndex] },
-        data: bandList.map(d => d.orders)
-      }]
-    }), rows.length > 0, p => toggleSetFilter(state.filters.discountBands, p.name));
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => ttCard(labels[p[0].dataIndex], [{ color: p[0].color, label: 'Raw Records', value: fmtNum(vals[p[0].dataIndex]) }, { label: '% of Dataset', value: fmtPct(safeDiv(vals[p[0].dataIndex], cs.rawCount) * 100, 1) }]) },
+      grid: { left: 48, right: 20, top: 20, bottom: 32 },
+      xAxis: { type: 'category', data: labels, axisLabel: { color: tc.text, fontSize: 11 } },
+      yAxis: { type: 'value', axisLabel: { color: tc.text }, splitLine: { lineStyle: { color: tc.grid } } },
+      series: [{ type: 'bar', barMaxWidth: 46, itemStyle: { borderRadius: [6, 6, 0, 0], color: p => ['#D97706', '#E11D48', '#7C3AED', '#059669'][p.dataIndex] }, data: vals }]
+    }), true);
 
-    document.getElementById('s3-insight-audit').innerHTML =
-      `Currently showing <strong>${fmtNum(rows.length)}</strong> rows (${state.filters.excludeUnknown ? 'excluding' : 'retaining'} Unknown POS segments). Toggle in top-right or sidebar to inspect impact.`;
+    document.getElementById('s3-insight-audit').innerHTML = `Raw CSV had <strong>${cs.blankDisc}</strong> blank Discounts and <strong>${cs.blankCust}</strong> blank CustomerTypes. Current view: <strong>${fmtNum(rows.length)}</strong> rows.`;
   }
 
-  // --- SLIDE 4: KPI DASHBOARD WITH TRENDS ---
+  // --- SLIDE 4: SALES KPI DASHBOARD ---
   function renderSlide4(rows, sum) {
-    document.getElementById('s4-kpi-strip').innerHTML = [
-      { cls: '', label: 'Gross Sales', val: fmtINR(sum.gross, true), badge: 'Catalog Value', sub: `${fmtINR(sum.discAmt, true)} Markdown` },
-      { cls: 'kpi-teal', label: 'Net Revenue', val: fmtINR(sum.netRev, true), badge: `${fmtNum(sum.orders)} Orders`, sub: `AOV ${fmtINR(sum.aov)}` },
-      { cls: 'kpi-green', label: 'Operating Profit', val: fmtINR(sum.profit, true), badge: fmtPct(sum.marginPct), sub: 'Net Operating Return' },
-      { cls: 'kpi-rose', label: 'Avg Discount %', val: fmtPct(sum.avgDisc), badge: `${fmtNum(sum.units)} Units`, sub: `${sum.basketSize.toFixed(2)} units/order` },
-      { cls: 'kpi-gold', label: 'Rev / Active Store', val: fmtINR(safeDiv(sum.netRev, sum.storesCount), true), badge: `${sum.storesCount} Stores`, sub: 'Network average' }
-    ].map(k => `
-      <div class="kpi-card ${k.cls}" data-kpi-tip='${JSON.stringify({ title: k.label, rows: [{ label: 'Value', value: k.val }, { label: 'Detail', value: k.sub }] })}'>
-        <div class="kpi-header-row"><span class="kpi-label">${k.label}</span><span class="kpi-delta-badge neutral">${k.badge}</span></div>
-        <div class="kpi-val-row"><span class="kpi-value">${k.val}</span></div>
-        <span class="kpi-sub">${k.sub}</span>
-      </div>`).join('');
-
     const mMap = groupBy(rows, r => r.MonthKey);
     const months = [...mMap.keys()].sort();
     const mData = months.map(m => mMap.get(m));
 
-    renderChart('s4-chart-monthly', tc => ({
+    renderChart('s4-chart-trend', tc => ({
       tooltip: {
         trigger: 'axis',
-        formatter: params => {
-          const i = params[0].dataIndex;
-          const cur = mData[i];
-          const prev = i > 0 ? mData[i - 1] : null;
+        formatter: p => {
+          const i = p[0].dataIndex, cur = mData[i], prev = i > 0 ? mData[i - 1] : null;
           const mom = prev ? safeDiv(cur.netRev - prev.netRev, prev.netRev) * 100 : null;
           return ttCard(`Month: ${cur.key}`, [
             { color: '#7C3AED', label: 'Net Revenue', value: fmtINR(cur.netRev) },
-            { color: '#059669', label: 'Operating Profit', value: fmtINR(cur.profit) },
-            { label: 'Margin %', value: fmtPct(cur.marginPct) },
-            { label: 'MoM Rev Change', value: mom !== null ? `${mom >= 0 ? '+' : ''}${mom.toFixed(1)}%` : 'First Month' }
+            { color: '#059669', label: 'Margin %', value: fmtPct(cur.marginPct) },
+            { label: 'MoM Rev Change', value: mom !== null ? `${mom >= 0 ? '+' : ''}${mom.toFixed(1)}%` : 'Start' }
           ]);
         }
       },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 54, right: 18, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: months, axisLabel: { color: tc.text, fontSize: 11 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 11, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      legend: { top: 0, textStyle: { color: tc.text, fontSize: 11 } },
+      grid: { left: 52, right: 44, top: 30, bottom: 26 },
+      xAxis: { type: 'category', data: months, axisLabel: { color: tc.text, fontSize: 10 } },
+      yAxis: [
+        { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+        { type: 'value', min: 20, max: 50, axisLabel: { color: tc.text, fontSize: 10, formatter: '{value}%' }, splitLine: { show: false } }
+      ],
       series: [
         {
-          name: 'Net Revenue', type: 'line', smooth: true, symbolSize: 6,
-          lineStyle: { width: 3, color: '#7C3AED' }, itemStyle: { color: '#7C3AED' },
-          areaStyle: { color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(124,58,237,0.28)' }, { offset: 1, color: 'rgba(124,58,237,0.02)' }]) },
+          name: 'Net Revenue', type: 'line', smooth: true, lineStyle: { width: 3, color: '#7C3AED' }, itemStyle: { color: '#7C3AED' },
+          areaStyle: { color: 'rgba(124,58,237,0.16)' },
           markPoint: { data: [{ type: 'max', name: 'Peak' }], label: { formatter: p => fmtINR(p.value, true) } },
-          markLine: { silent: true, data: [{ type: 'average', name: 'Avg' }], label: { formatter: p => `Avg ${fmtINR(p.value, true)}` } },
+          markLine: { silent: true, data: [{ type: 'average', name: 'Avg' }] },
           data: mData.map(d => Math.round(d.netRev))
         },
-        {
-          name: 'Operating Profit', type: 'line', smooth: true, symbolSize: 5,
-          lineStyle: { width: 2.5, color: '#059669' }, itemStyle: { color: '#059669' },
-          data: mData.map(d => Math.round(d.profit))
-        }
+        { name: 'Margin %', type: 'line', yAxisIndex: 1, smooth: true, lineStyle: { width: 2, color: '#059669' }, itemStyle: { color: '#059669' }, data: mData.map(d => Number(d.marginPct.toFixed(2))) }
       ]
     }), months.length > 0);
 
-    const peakMonth = [...mData].sort((a, b) => b.netRev - a.netRev)[0];
-    document.getElementById('s4-insight-monthly').innerHTML = peakMonth
-      ? `Peak revenue occurred in <strong>${peakMonth.key}</strong> at <strong>${fmtINR(peakMonth.netRev)}</strong> (${fmtNum(peakMonth.orders)} orders, ${fmtPct(peakMonth.marginPct)} margin).`
-      : 'No monthly data available.';
+    const catMap = groupBy(rows, r => r.Category);
+    const cats = ['Clothing', 'Shoes', 'Accessories'].map(c => catMap.get(c) || { key: c, netRev: 0, profit: 0, marginPct: 0, orders: 0 });
+    renderChart('s4-chart-catstore', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => { const c = cats[p[0].dataIndex]; return ttCard(c.key, [{ color: CAT_COLORS[c.key], label: 'Net Revenue', value: fmtINR(c.netRev) }, { label: 'Share', value: fmtPct(safeDiv(c.netRev, sum.netRev)*100, 1) }, { label: 'Profit', value: fmtINR(c.profit) }]); } },
+      grid: { left: 52, right: 16, top: 18, bottom: 26 },
+      xAxis: { type: 'category', data: cats.map(c => c.key), axisLabel: { color: tc.text } },
+      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      series: [{ type: 'bar', barMaxWidth: 46, itemStyle: { borderRadius: [6, 6, 0, 0], color: p => CAT_COLORS[cats[p.dataIndex].key] }, data: cats.map(c => Math.round(c.netRev)) }]
+    }), rows.length > 0, p => toggleSet(state.filters.categories, p.name));
 
-    const bMap = groupBy(rows, r => r.DiscountBand);
-    const bData = BAND_ORDER.map(b => bMap.get(b) || { key: b, netRev: 0, profit: 0, marginPct: 0, orders: 0 });
-    renderChart('s4-chart-discband', tc => ({
-      tooltip: {
-        trigger: 'axis',
-        formatter: params => {
-          const d = bData[params[0].dataIndex];
-          return ttCard(d.key, [
-            { color: '#7C3AED', label: 'Net Revenue', value: fmtINR(d.netRev) },
-            { color: '#E11D48', label: 'Margin %', value: fmtPct(d.marginPct) },
-            { label: 'Operating Profit', value: fmtINR(d.profit) },
-            { label: 'Orders', value: fmtNum(d.orders) }
-          ]);
-        }
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 52, right: 44, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: BAND_ORDER, axisLabel: { color: tc.text, fontSize: 11 } },
-      yAxis: [
-        { type: 'value', axisLabel: { color: tc.text, fontSize: 11, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-        { type: 'value', min: 0, max: 50, axisLabel: { color: tc.text, fontSize: 11, formatter: '{value}%' }, splitLine: { show: false } }
+    const peakM = [...mData].sort((a, b) => b.netRev - a.netRev)[0];
+    renderStoryPanel('s4-story', {
+      keyLabel: 'Sales / Store / Week',
+      keyValue: fmtINR(sum.salesPerStoreWeek),
+      keySub: `Total ${fmtINR(sum.netRev, true)} across ${sum.storesCount} stores`,
+      bullets: [
+        peakM ? `Peak monthly sales reached <strong>${fmtINR(peakM.netRev)}</strong> in <strong>${peakM.key}</strong> (festive surge).` : 'No monthly data.',
+        `Network blended margin holds at <strong>${fmtPct(sum.marginPct)}</strong> (${fmtINR(sum.profit, true)} profit).`,
+        `Average order value is <strong>${fmtINR(sum.aov)}</strong> across ${fmtNum(sum.orders)} transactions.`
       ],
-      series: [
-        { name: 'Net Revenue', type: 'bar', barMaxWidth: 42, itemStyle: { color: '#7C3AED', borderRadius: [6, 6, 0, 0] }, data: bData.map(d => Math.round(d.netRev)) },
-        { name: 'Margin %', type: 'line', yAxisIndex: 1, lineStyle: { width: 3, color: '#E11D48' }, itemStyle: { color: '#E11D48' }, data: bData.map(d => Number(d.marginPct.toFixed(2))) }
-      ]
-    }), rows.length > 0, p => toggleSetFilter(state.filters.discountBands, p.name));
-
-    const noDisc = bData[0], highDisc = bData[3];
-    document.getElementById('s4-insight-discband').innerHTML =
-      `Operating margin collapses from <strong>${fmtPct(noDisc.marginPct)}</strong> (0% discount) to <strong>${fmtPct(highDisc.marginPct)}</strong> on High Discounts (16–30%).`;
+      why: 'Identifying seasonal festive spikes vs steady baseline months prevents pre-Diwali stockouts and guides inventory allocation.',
+      actionLabel: 'Action: Lock Inventory',
+      actionText: 'Lock festive inventory builds by September 15th to capture 100% of October peak demand.'
+    });
   }
 
-  // --- SLIDE 5: PRODUCT & CATEGORY PERFORMANCE ---
+  // --- SLIDE 5: CATEGORY & PRODUCT PERFORMANCE (Q1) ---
   function renderSlide5(rows, sum) {
     const catMap = groupBy(rows, r => r.Category);
-    const cats = ['Clothing', 'Shoes', 'Accessories'].map(c => catMap.get(c) || { key: c, orders: 0, units: 0, netRev: 0, profit: 0, marginPct: 0, aov: 0 });
+    const cats = ['Clothing', 'Shoes', 'Accessories'].map(c => catMap.get(c) || { key: c, netRev: 0, profit: 0, marginPct: 0, units: 0, aov: 0 });
 
-    document.getElementById('s5-category-kpis').innerHTML = cats.map(c => {
-      const cls = c.key === 'Shoes' ? 'kpi-rose' : c.key === 'Accessories' ? 'kpi-gold' : '';
-      return `<div class="kpi-card ${cls}" data-kpi-tip='${JSON.stringify({ title: `${c.key} Category`, rows: [{ label: 'Net Revenue', value: fmtINR(c.netRev) }, { label: 'Profit', value: fmtINR(c.profit) }, { label: 'AOV', value: fmtINR(c.aov) }] })}'>
-        <div class="kpi-header-row"><span class="kpi-label">${c.key}</span><span class="kpi-delta-badge positive">${fmtPct(c.marginPct)} Margin</span></div>
-        <div class="kpi-val-row"><span class="kpi-value">${fmtINR(c.netRev, true)}</span></div>
-        <span class="kpi-sub">${fmtNum(c.orders)} Orders · ${fmtNum(c.units)} Units · AOV ${fmtINR(c.aov)}</span>
-      </div>`;
-    }).join('');
-
-    // Treemap (Category -> PriceTier)
-    const treeData = ['Clothing', 'Shoes', 'Accessories'].map(c => {
-      const cRows = rows.filter(r => r.Category === c);
-      const tierMap = groupBy(cRows, r => r.PriceTier);
-      const cTotal = cRows.reduce((a, b) => a + b.NetRevenue, 0);
-      return {
-        name: c, value: Math.round(cTotal),
-        itemStyle: { color: CAT_COLORS[c] },
-        children: [...tierMap.values()].map(t => ({ name: `${c} · ${t.key}`, cat: c, value: Math.round(t.netRev), profit: t.profit, marginPct: t.marginPct }))
-      };
-    }).filter(x => x.value > 0);
-
-    renderChart('s5-chart-treemap', tc => ({
-      tooltip: {
-        formatter: p => {
-          const d = p.data;
-          return ttCard(d.name, [
-            { color: CAT_COLORS[d.cat || d.name], label: 'Net Revenue', value: fmtINR(d.value) },
-            { label: '% of Total Rev', value: fmtPct(safeDiv(d.value, sum.netRev) * 100, 1) },
-            ...(d.profit !== undefined ? [{ label: 'Profit', value: fmtINR(d.profit) }, { label: 'Margin %', value: fmtPct(d.marginPct) }] : [])
-          ]);
-        }
-      },
-      series: [{
-        type: 'treemap', roam: false, breadcrumb: { show: false },
-        label: { show: true, formatter: '{b}\n₹{c}', fontSize: 11 },
-        itemStyle: { borderColor: tc.tooltipBg, borderWidth: 2, gapWidth: 2 },
-        data: treeData
-      }]
-    }), rows.length > 0, p => { if (p.data && (p.data.cat || CAT_COLORS[p.data.name])) toggleSetFilter(state.filters.categories, p.data.cat || p.data.name); });
-
-    document.getElementById('s5-insight-treemap').innerHTML =
-      `Shoes generates <strong>${fmtPct(safeDiv(cats[1].netRev, sum.netRev) * 100, 1)}</strong> of network revenue despite representing just <strong>${fmtPct(safeDiv(cats[1].units, sum.units) * 100, 1)}</strong> of unit volume.`;
-
-    // Grouped Bar
-    renderChart('s5-chart-bar', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => {
-          const d = cats[params[0].dataIndex];
-          return ttCard(d.key, [
-            { color: '#7C3AED', label: 'Net Revenue', value: fmtINR(d.netRev) },
-            { color: '#059669', label: 'Operating Profit', value: fmtINR(d.profit) },
-            { label: 'Margin %', value: fmtPct(d.marginPct) },
-            { label: 'AOV', value: fmtINR(d.aov) }
-          ]);
-        }
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 52, right: 18, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: cats.map(c => c.key), axisLabel: { color: tc.text, fontSize: 12 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 11, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+    renderChart('s5-chart-catbar', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => { const c = cats[p[0].dataIndex]; return ttCard(c.key, [{ color: '#7C3AED', label: 'Net Revenue', value: fmtINR(c.netRev) }, { color: '#059669', label: 'Profit', value: fmtINR(c.profit) }, { label: 'Margin %', value: fmtPct(c.marginPct) }, { label: 'AOV', value: fmtINR(c.aov) }]); } },
+      legend: { top: 0, textStyle: { color: tc.text, fontSize: 11 } },
+      grid: { left: 52, right: 16, top: 30, bottom: 26 },
+      xAxis: { type: 'category', data: cats.map(c => c.key), axisLabel: { color: tc.text } },
+      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
       series: [
-        { name: 'Net Revenue', type: 'bar', barMaxWidth: 36, itemStyle: { color: '#7C3AED', borderRadius: [6, 6, 0, 0] }, data: cats.map(c => Math.round(c.netRev)) },
-        { name: 'Operating Profit', type: 'bar', barMaxWidth: 36, itemStyle: { color: '#059669', borderRadius: [6, 6, 0, 0] }, data: cats.map(c => Math.round(c.profit)) }
+        { name: 'Net Revenue', type: 'bar', barMaxWidth: 34, itemStyle: { color: '#7C3AED', borderRadius: [5, 5, 0, 0] }, data: cats.map(c => Math.round(c.netRev)) },
+        { name: 'Profit', type: 'bar', barMaxWidth: 34, itemStyle: { color: '#059669', borderRadius: [5, 5, 0, 0] }, data: cats.map(c => Math.round(c.profit)) }
       ]
-    }), rows.length > 0, p => toggleSetFilter(state.filters.categories, p.name));
+    }), rows.length > 0, p => toggleSet(state.filters.categories, p.name));
 
-    document.getElementById('s5-insight-bar').innerHTML =
-      `<strong>Accessories</strong> delivers the highest profit margin (<strong>${fmtPct(cats[2].marginPct)}</strong>), making checkout attach bundling an instant profit lever.`;
+    const prodMap = groupBy(rows, r => `${r.ProductID}|${r.Category}`);
+    const prods = [...prodMap.values()].sort((a, b) => b.netRev - a.netRev);
+    const sampleProds = prods.slice(0, 60);
+    const medUnits = sampleProds.length ? [...sampleProds].sort((a, b) => a.units - b.units)[Math.floor(sampleProds.length / 2)].units : 2;
+    const medMarg = sampleProds.length ? [...sampleProds].sort((a, b) => a.marginPct - b.marginPct)[Math.floor(sampleProds.length / 2)].marginPct : 35;
 
-    // Table Toggle Content
-    const prodMap = groupBy(rows, r => `${r.ProductID} (${r.Category})`);
-    const topProds = [...prodMap.values()].sort((a, b) => b.netRev - a.netRev).slice(0, 30);
-    document.getElementById('s5-table-container').innerHTML = `
-      <table class="bi-table">
-        <thead><tr><th>Product (Category)</th><th>Orders</th><th>Units</th><th>Net Revenue</th><th>Profit</th><th>Margin %</th></tr></thead>
-        <tbody>${topProds.map(p => `<tr><td title="${p.key}">${p.key}</td><td>${p.orders}</td><td>${p.units}</td><td>${fmtINR(p.netRev)}</td><td>${fmtINR(p.profit)}</td><td>${fmtPct(p.marginPct)}</td></tr>`).join('')}</tbody>
-      </table>`;
+    renderChart('s5-chart-quad', tc => ({
+      tooltip: { formatter: p => { const d = p.data.raw; const [pid, cat] = d.key.split('|'); return ttCard(`${pid} (${cat})`, [{ color: CAT_COLORS[cat], label: 'Units Sold', value: fmtNum(d.units) }, { label: 'Margin %', value: fmtPct(d.marginPct) }, { label: 'Net Revenue', value: fmtINR(d.netRev) }]); } },
+      grid: { left: 46, right: 18, top: 18, bottom: 28 },
+      xAxis: { type: 'value', name: 'Units', axisLabel: { color: tc.text, fontSize: 10 }, splitLine: { lineStyle: { color: tc.grid } } },
+      yAxis: { type: 'value', name: 'Margin%', axisLabel: { color: tc.text, fontSize: 10, formatter: '{value}%' }, splitLine: { lineStyle: { color: tc.grid } } },
+      series: [{
+        type: 'scatter', symbolSize: 9,
+        markLine: { silent: true, lineStyle: { type: 'dashed', color: tc.text }, data: [{ xAxis: medUnits }, { yAxis: medMarg }] },
+        data: sampleProds.map(d => ({ value: [d.units, Number(d.marginPct.toFixed(1))], raw: d, itemStyle: { color: d.marginPct < 25 ? '#DC2626' : (CAT_COLORS[d.key.split('|')[1]] || '#7C3AED'), opacity: 0.82 } }))
+      }]
+    }), sampleProds.length > 0);
+
+    document.getElementById('s5-table-wrap').innerHTML = `<table class="bi-table"><thead><tr><th>Product</th><th>Category</th><th>Units</th><th>Net Rev</th><th>Profit</th><th>Margin %</th></tr></thead><tbody>${prods.slice(0, 25).map(p => { const [id, c] = p.key.split('|'); return `<tr><td>${id}</td><td>${c}</td><td>${p.units}</td><td>${fmtINR(p.netRev)}</td><td>${fmtINR(p.profit)}</td><td>${fmtPct(p.marginPct)}</td></tr>`; }).join('')}</tbody></table>`;
+
+    const underPerf = prods.filter(p => p.marginPct < 25).length;
+    renderStoryPanel('s5-story', {
+      keyLabel: 'Top Margin Category',
+      keyValue: `${cats[2].key} (${fmtPct(cats[2].marginPct)})`,
+      keySub: `Shoes AOV: ${fmtINR(cats[1].aov)} vs Clothing ${fmtINR(cats[0].aov)}`,
+      bullets: [
+        `<strong>Clothing</strong> generates <strong>${fmtINR(cats[0].netRev, true)}</strong> (${fmtPct(safeDiv(cats[0].netRev, sum.netRev) * 100, 1)} share).`,
+        `<strong>Shoes</strong> delivers <strong>${fmtPct(safeDiv(cats[1].netRev, sum.netRev) * 100, 1)}</strong> revenue from high ₹4,841 AOV.`,
+        `<strong>${underPerf}</strong> active SKUs fall below 25% margin due to deep markdowns.`
+      ],
+      why: 'Answers Q1 & Objective 2: pairing high-margin Accessories with high-ticket Shoes multiplies operating profit per basket.',
+      actionLabel: 'Action: Bundle & Prune',
+      actionText: 'Bundle Accessories at checkout with Clothing/Shoes and restrict >15% discounts on low-margin SKUs.'
+    });
   }
 
-  // --- SLIDE 6: STORE MATRIX & CUSTOMER / PAYMENT ---
+  // --- SLIDE 6: WEEKEND VS WEEKDAY (Q2) ---
   function renderSlide6(rows, sum) {
-    const storeMap = groupBy(rows, r => r.StoreID);
-    const stores = [...storeMap.values()];
-    const sortedRev = [...stores].map(s => s.netRev).sort((a, b) => a - b);
-    const sortedProf = [...stores].map(s => s.profit).sort((a, b) => a - b);
-    const medRev = sortedRev.length ? sortedRev[Math.floor(sortedRev.length / 2)] : 0;
-    const medProf = sortedProf.length ? sortedProf[Math.floor(sortedProf.length / 2)] : 0;
+    const dowMap = groupBy(rows, r => r.DayOfWeek);
+    const dow = DAY_ORDER.map(d => dowMap.get(d) || { key: d, netRev: 0, orders: 0, aov: 0, marginPct: 0 });
+    const avgDow = safeDiv(sum.netRev, 7);
 
-    stores.forEach(s => {
-      if (s.netRev >= medRev && s.profit >= medProf) s.quadrant = 'Strong Performer';
-      else if (s.netRev >= medRev && s.profit < medProf) s.quadrant = 'Margin Problem';
-      else if (s.netRev < medRev && s.profit >= medProf) s.quadrant = 'Growth Opportunity';
-      else s.quadrant = 'Needs Investigation';
-    });
-
-    const qColor = {
-      'Strong Performer': '#059669',
-      'Margin Problem': '#DC2626',
-      'Growth Opportunity': '#7C3AED',
-      'Needs Investigation': '#D97706'
-    };
-
-    renderChart('s6-chart-matrix', tc => ({
-      tooltip: {
-        formatter: p => {
-          const s = p.data.raw;
-          return ttCard(`${s.key} · ${s.quadrant}`, [
-            { color: qColor[s.quadrant], label: 'Net Revenue', value: fmtINR(s.netRev) },
-            { label: 'Operating Profit', value: fmtINR(s.profit) },
-            { label: 'Margin %', value: fmtPct(s.marginPct) },
-            { label: 'Orders / Shoes', value: `${s.orders} orders (${s.shoeOrders} shoes)` }
-          ]);
-        }
-      },
-      grid: { left: 52, right: 16, top: 20, bottom: 32 },
-      xAxis: { type: 'value', name: 'Rev', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-      yAxis: { type: 'value', name: 'Profit', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-      series: [{
-        type: 'scatter',
-        symbolSize: (val, p) => Math.max(8, Math.min(22, p.data.raw.orders * 0.48)),
-        markLine: {
-          silent: true, lineStyle: { type: 'dashed', color: tc.text },
-          data: [{ xAxis: medRev }, { yAxis: medProf }]
-        },
-        data: stores.map(s => ({ value: [Math.round(s.netRev), Math.round(s.profit)], raw: s, itemStyle: { color: qColor[s.quadrant], opacity: (!state.filters.store || state.filters.store === s.key) ? 0.88 : 0.25 } }))
-      }]
-    }), stores.length > 0, p => {
-      const sid = p.data.raw.key;
-      state.filters.store = (state.filters.store === sid) ? '' : sid;
-      document.getElementById('filter-store-select').value = state.filters.store;
-      renderAll();
-    });
-
-    const strongCnt = stores.filter(s => s.quadrant === 'Strong Performer').length;
-    document.getElementById('s6-insight-matrix').innerHTML =
-      `Median thresholds (<strong>${fmtINR(medRev, true)}</strong> Rev, <strong>${fmtINR(medProf, true)}</strong> Profit) classify <strong>${strongCnt}</strong> Strong Performers.`;
-
-    // Top 10 Stores Horizontal Bar
-    const top10 = [...stores].sort((a, b) => b.netRev - a.netRev).slice(0, 10).reverse();
-    const avgStoreRev = safeDiv(sum.netRev, stores.length);
-    renderChart('s6-chart-topstores', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => {
-          const s = top10[params[0].dataIndex];
-          return ttCard(s.key, [
-            { color: '#7C3AED', label: 'Net Revenue', value: fmtINR(s.netRev) },
-            { label: 'vs Store Avg', value: `${s.netRev >= avgStoreRev ? '+' : ''}${fmtINR(s.netRev - avgStoreRev)}` },
-            { label: 'Profit (Margin)', value: `${fmtINR(s.profit)} (${fmtPct(s.marginPct)})` }
-          ]);
-        }
-      },
-      grid: { left: 68, right: 18, top: 14, bottom: 26 },
-      xAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-      yAxis: { type: 'category', data: top10.map(s => s.key), axisLabel: { color: tc.text, fontSize: 11 } },
-      series: [{
-        type: 'bar', barMaxWidth: 18,
-        itemStyle: { borderRadius: [0, 5, 5, 0], color: '#7C3AED' },
-        data: top10.map(s => Math.round(s.netRev))
-      }]
-    }), top10.length > 0, p => {
-      state.filters.store = (state.filters.store === p.name) ? '' : p.name;
-      document.getElementById('filter-store-select').value = state.filters.store;
-      renderAll();
-    });
-
-    const topS = top10[top10.length - 1];
-    document.getElementById('s6-insight-topstores').innerHTML = topS
-      ? `Top store <strong>${topS.key}</strong> generated <strong>${fmtINR(topS.netRev)}</strong> across <strong>${topS.orders}</strong> orders.`
-      : 'No store data.';
-
-    // Payment Mode Bar
-    const payMap = groupBy(rows, r => r.PaymentMode);
-    const pays = ['Card', 'Cash', 'Digital', 'Unknown'].map(p => payMap.get(p) || { key: p, orders: 0, netRev: 0, profit: 0, marginPct: 0, aov: 0 });
-    renderChart('s6-chart-payment', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => {
-          const d = pays[params[0].dataIndex];
-          return ttCard(`Payment: ${d.key}`, [
-            { color: '#0D9488', label: 'Net Revenue', value: fmtINR(d.netRev) },
-            { label: 'AOV', value: fmtINR(d.aov) },
-            { label: 'Margin %', value: fmtPct(d.marginPct) },
-            { label: 'Orders', value: fmtNum(d.orders) }
-          ]);
-        }
-      },
-      grid: { left: 50, right: 16, top: 20, bottom: 28 },
-      xAxis: { type: 'category', data: pays.map(p => p.key), axisLabel: { color: tc.text, fontSize: 11 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+    renderChart('s6-chart-dow', tc => ({
+      tooltip: { trigger: 'axis', formatter: p => { const d = dow[p[0].dataIndex]; return ttCard(d.key, [{ color: p[0].color, label: 'Net Revenue', value: fmtINR(d.netRev) }, { label: 'Orders', value: fmtNum(d.orders) }, { label: 'AOV', value: fmtINR(d.aov) }, { label: 'vs 7-Day Avg', value: `${d.netRev >= avgDow ? '+' : ''}${fmtINR(d.netRev - avgDow)}` }]); } },
+      grid: { left: 52, right: 16, top: 22, bottom: 26 },
+      xAxis: { type: 'category', data: DAY_ORDER.map(d => d.slice(0, 3)), axisLabel: { color: tc.text } },
+      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
       series: [{
         type: 'bar', barMaxWidth: 38,
-        itemStyle: { borderRadius: [6, 6, 0, 0], color: p => ['#4F46E5', '#D97706', '#059669', '#64748B'][p.dataIndex] },
-        data: pays.map(p => Math.round(p.netRev))
+        markLine: { silent: true, data: [{ type: 'average', name: 'Avg' }] },
+        itemStyle: { borderRadius: [6, 6, 0, 0], color: p => (p.dataIndex >= 5 ? '#E11D48' : '#7C3AED') },
+        data: dow.map(d => Math.round(d.netRev))
       }]
-    }), rows.length > 0, p => toggleSetFilter(state.filters.paymentModes, p.name));
+    }), rows.length > 0, p => toggleSet(state.filters.daysOfWeek, DAY_ORDER[p.dataIndex]));
 
-    const upi = pays[2];
-    document.getElementById('s6-insight-payment').innerHTML =
-      `<strong>Digital UPI</strong> posts the highest AOV (<strong>${fmtINR(upi.aov)}</strong>) and margin (<strong>${fmtPct(upi.marginPct)}</strong>).`;
+    // Festival vs Regular Weeks (Weekday vs Weekend avg per day)
+    const festWknd = rows.filter(r => r.Season === 'Festive (Oct-Nov)' && r.DayType === 'Weekend').reduce((a, b) => a + b.NetRevenue, 0);
+    const festWkdy = rows.filter(r => r.Season === 'Festive (Oct-Nov)' && r.DayType === 'Weekday').reduce((a, b) => a + b.NetRevenue, 0);
+    const regWknd = rows.filter(r => r.Season !== 'Festive (Oct-Nov)' && r.DayType === 'Weekend').reduce((a, b) => a + b.NetRevenue, 0);
+    const regWkdy = rows.filter(r => r.Season !== 'Festive (Oct-Nov)' && r.DayType === 'Weekday').reduce((a, b) => a + b.NetRevenue, 0);
+
+    renderChart('s6-chart-fest', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => ttCard(p[0].name, p.map(s => ({ color: s.color, label: s.seriesName, value: fmtINR(s.value) }))) },
+      legend: { top: 0, textStyle: { color: tc.text, fontSize: 11 } },
+      grid: { left: 52, right: 16, top: 30, bottom: 26 },
+      xAxis: { type: 'category', data: ['Festive (Oct-Nov)', 'Non-Festive'], axisLabel: { color: tc.text } },
+      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      series: [
+        { name: 'Weekday Revenue', type: 'bar', barMaxWidth: 36, itemStyle: { color: '#7C3AED', borderRadius: [5, 5, 0, 0] }, data: [Math.round(festWkdy), Math.round(regWkdy)] },
+        { name: 'Weekend Revenue', type: 'bar', barMaxWidth: 36, itemStyle: { color: '#E11D48', borderRadius: [5, 5, 0, 0] }, data: [Math.round(festWknd), Math.round(regWknd)] }
+      ]
+    }), rows.length > 0);
+
+    const peakDay = [...dow].sort((a, b) => b.netRev - a.netRev)[0];
+    renderStoryPanel('s6-story', {
+      keyLabel: 'Weekend / Weekday Ratio',
+      keyValue: `${sum.wkndRatio.toFixed(2)}x`,
+      keySub: `Weekends = ${fmtPct(sum.wkndShare, 1)} of revenue (28.6% of days)`,
+      bullets: [
+        peakDay ? `<strong>${peakDay.key}</strong> is the #1 sales day (<strong>${fmtINR(peakDay.netRev)}</strong>, ${fmtNum(peakDay.orders)} orders).` : 'No daily data.',
+        `Saturday logs fewer orders than Friday and Monday, confirming weekend stagnation.`,
+        `Festive weekends generate <strong>${fmtINR(festWknd, true)}</strong>, showing event-driven promos work.`
+      ],
+      why: 'Answers Q2 & Objective 1: Weekend volume matches calendar proportion (~28.7%), leaving +15% headroom untapped.',
+      actionLabel: 'Action: Weekend Events',
+      actionText: 'Launch weekend-exclusive "Complete the Look" bundle offers and shift baseline staffing toward Friday–Monday.'
+    });
   }
 
-  // --- SLIDE 7: DEEP-DIVE ON MAIN BUSINESS PROBLEMS ---
-  function renderSlide7(rows, sum) {
-    const rVal = pearsonR(rows.map(r => r.Discount), rows.map(r => r.Quantity));
-    const storeList = [...groupBy(rows, r => r.StoreID).values()].sort((a, b) => b.netRev - a.netRev);
-    const bestS = storeList[0], worstS = storeList[storeList.length - 1];
-    const ratio = (bestS && worstS) ? safeDiv(bestS.netRev, worstS.netRev) : 0;
-    const highDisc = rows.filter(r => r.Discount >= 16);
-    const highDiscMargin = safeDiv(highDisc.reduce((a, b) => a + b.Profit, 0), highDisc.reduce((a, b) => a + b.NetRevenue, 0)) * 100;
-
-    document.getElementById('s7-problem-kpis').innerHTML = [
-      { cls: 'kpi-rose', label: 'Discount Elasticity (r)', val: rVal.toFixed(4), badge: 'Zero Expansion', sub: 'Discount % vs Quantity correlation' },
-      { cls: 'kpi-rose', label: 'High-Disc Margin (16-30%)', val: fmtPct(highDiscMargin), badge: `${highDisc.length} Orders`, sub: 'vs ~40.2% on 0% discount' },
-      { cls: 'kpi-gold', label: 'Top vs Bottom Store Gap', val: `${ratio.toFixed(1)}x`, badge: `${bestS ? bestS.key : '-'} vs ${worstS ? worstS.key : '-'}`, sub: 'Driven by footwear scarcity' },
-      { cls: 'kpi-teal', label: 'Markdown Surrender', val: fmtINR(sum.discAmt, true), badge: fmtPct(safeDiv(sum.discAmt, sum.gross) * 100, 1), sub: 'Total gross revenue discounted' }
-    ].map(k => `
-      <div class="kpi-card ${k.cls}" data-kpi-tip='${JSON.stringify({ title: k.label, rows: [{ label: 'Value', value: k.val }, { label: 'Diagnosis', value: k.sub }] })}'>
-        <div class="kpi-header-row"><span class="kpi-label">${k.label}</span><span class="kpi-delta-badge negative">${k.badge}</span></div>
-        <div class="kpi-val-row"><span class="kpi-value">${k.val}</span></div>
-        <span class="kpi-sub">${k.sub}</span>
-      </div>`).join('');
-
-    // Discount % vs Margin % by exact Discount rate
-    const discRates = [0, 5, 10, 15, 20, 25, 30];
-    const rateStats = discRates.map(rate => {
-      const sub = rows.filter(r => r.Discount === rate);
+  // --- SLIDE 7: DISCOUNT IMPACT (Q3) ---
+  function renderSlide7(rows) {
+    const rates = [0, 5, 10, 15, 20, 25, 30];
+    const rateData = rates.map(rt => {
+      const sub = rows.filter(r => r.Discount === rt);
       const rev = sub.reduce((a, b) => a + b.NetRevenue, 0);
       const prof = sub.reduce((a, b) => a + b.Profit, 0);
       const qty = sub.reduce((a, b) => a + b.Quantity, 0);
-      return { rate: `${rate}%`, orders: sub.length, marginPct: safeDiv(prof, rev) * 100, basket: safeDiv(qty, sub.length) };
+      return { rate: `${rt}%`, marginPct: safeDiv(prof, rev) * 100, basket: safeDiv(qty, sub.length), orders: sub.length };
     });
 
-    renderChart('s7-chart-elasticity', tc => ({
-      tooltip: {
-        trigger: 'axis',
-        formatter: params => {
-          const d = rateStats[params[0].dataIndex];
-          return ttCard(`Discount Rate: ${d.rate}`, [
-            { color: '#E11D48', label: 'Profit Margin %', value: fmtPct(d.marginPct) },
-            { color: '#7C3AED', label: 'Avg Basket Size', value: `${d.basket.toFixed(2)} units` },
-            { label: 'Orders', value: fmtNum(d.orders) }
-          ]);
-        }
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 48, right: 48, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: rateStats.map(d => d.rate), axisLabel: { color: tc.text, fontSize: 11 } },
+    renderChart('s7-chart-disc', tc => ({
+      tooltip: { trigger: 'axis', formatter: p => { const d = rateData[p[0].dataIndex]; return ttCard(`Discount: ${d.rate}`, [{ color: '#E11D48', label: 'Margin %', value: fmtPct(d.marginPct) }, { color: '#7C3AED', label: 'Units/Order', value: `${d.basket.toFixed(2)} u` }, { label: 'Orders', value: fmtNum(d.orders) }]); } },
+      legend: { top: 0, textStyle: { color: tc.text, fontSize: 11 } },
+      grid: { left: 46, right: 44, top: 30, bottom: 26 },
+      xAxis: { type: 'category', data: rateData.map(d => d.rate), axisLabel: { color: tc.text } },
       yAxis: [
         { type: 'value', min: 0, max: 50, axisLabel: { color: tc.text, formatter: '{value}%' }, splitLine: { lineStyle: { color: tc.grid } } },
-        { type: 'value', min: 0, max: 4, axisLabel: { color: tc.text, formatter: '{value} u' }, splitLine: { show: false } }
+        { type: 'value', min: 0, max: 4, axisLabel: { color: tc.text, formatter: '{value}u' }, splitLine: { show: false } }
       ],
       series: [
-        { name: 'Profit Margin %', type: 'bar', barMaxWidth: 34, itemStyle: { color: '#E11D48', borderRadius: [6, 6, 0, 0] }, data: rateStats.map(d => Number(d.marginPct.toFixed(2))) },
-        { name: 'Units / Order', type: 'line', yAxisIndex: 1, lineStyle: { width: 3, color: '#7C3AED' }, itemStyle: { color: '#7C3AED' }, data: rateStats.map(d => Number(d.basket.toFixed(2))) }
+        { name: 'Margin %', type: 'bar', barMaxWidth: 32, markLine: { silent: true, lineStyle: { color: '#DC2626', type: 'dashed' }, data: [{ xAxis: '30%', label: { formatter: '30% Policy Cap' } }] }, itemStyle: { color: '#E11D48', borderRadius: [5, 5, 0, 0] }, data: rateData.map(d => Number(d.marginPct.toFixed(2))) },
+        { name: 'Units / Order', type: 'line', yAxisIndex: 1, lineStyle: { width: 3, color: '#7C3AED' }, itemStyle: { color: '#7C3AED' }, data: rateData.map(d => Number(d.basket.toFixed(2))) }
       ]
     }), rows.length > 0);
 
-    document.getElementById('s7-insight-elasticity').innerHTML =
-      `Basket size stays flat around <strong>2.1 units</strong> across all discount rates (r = <strong>${rVal.toFixed(4)}</strong>), proving deep markdowns only destroy margin.`;
-
-    // Top 5 vs Bottom 5 Category Mix
-    const top5Ids = new Set(storeList.slice(0, 5).map(s => s.key));
-    const bot5Ids = new Set(storeList.slice(-5).map(s => s.key));
-    const calcCohortCat = ids => ['Clothing', 'Shoes', 'Accessories'].map(c =>
-      Math.round(rows.filter(r => ids.has(r.StoreID) && r.Category === c).reduce((a, b) => a + b.NetRevenue, 0))
-    );
-    const topMix = calcCohortCat(top5Ids);
-    const botMix = calcCohortCat(bot5Ids);
-
-    renderChart('s7-chart-chasm', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => ttCard(params[0].name, params.map(p => ({ color: p.color, label: p.seriesName, value: fmtINR(p.value) })))
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 54, right: 18, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: ['Top 5 Stores', 'Bottom 5 Stores'], axisLabel: { color: tc.text, fontSize: 12 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-      series: ['Clothing', 'Shoes', 'Accessories'].map((c, idx) => ({
-        name: c, type: 'bar', stack: 'mix', barMaxWidth: 58,
-        itemStyle: { color: CAT_COLORS[c] },
-        data: [topMix[idx], botMix[idx]]
-      }))
-    }), storeList.length >= 2);
-
-    document.getElementById('s7-insight-chasm').innerHTML =
-      `Top 5 stores generate <strong>${fmtINR(topMix[1], true)}</strong> in Shoes vs just <strong>${fmtINR(botMix[1], true)}</strong> across Bottom 5 stores.`;
-  }
-
-  // --- SLIDE 8: TRENDS & SEASONALITY ---
-  function renderSlide8(rows, sum) {
-    const dowMap = groupBy(rows, r => r.DayOfWeek);
-    const dowData = DAY_ORDER.map(d => dowMap.get(d) || { key: d, orders: 0, netRev: 0, profit: 0, marginPct: 0 });
-    const avgDowRev = safeDiv(sum.netRev, 7);
-
-    renderChart('s8-chart-dow', tc => ({
-      tooltip: {
-        trigger: 'axis',
-        formatter: params => {
-          const d = dowData[params[0].dataIndex];
-          return ttCard(d.key, [
-            { color: '#7C3AED', label: 'Net Revenue', value: fmtINR(d.netRev) },
-            { color: '#0D9488', label: 'Orders', value: fmtNum(d.orders) },
-            { label: 'vs 7-Day Avg', value: `${d.netRev >= avgDowRev ? '+' : ''}${fmtINR(d.netRev - avgDowRev)}` },
-            { label: 'Margin %', value: fmtPct(d.marginPct) }
-          ]);
-        }
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 52, right: 44, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: DAY_ORDER.map(d => d.slice(0, 3)), axisLabel: { color: tc.text, fontSize: 12 } },
-      yAxis: [
-        { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
-        { type: 'value', axisLabel: { color: tc.text }, splitLine: { show: false } }
-      ],
-      series: [
-        {
-          name: 'Net Revenue', type: 'bar', barMaxWidth: 38,
-          markLine: { silent: true, data: [{ type: 'average', name: 'Avg' }], label: { formatter: p => `Avg ${fmtINR(p.value, true)}` } },
-          itemStyle: { borderRadius: [6, 6, 0, 0], color: p => (p.dataIndex >= 5 ? '#E11D48' : '#7C3AED') },
-          data: dowData.map(d => Math.round(d.netRev))
-        },
-        { name: 'Orders', type: 'line', yAxisIndex: 1, lineStyle: { width: 3, color: '#0D9488' }, itemStyle: { color: '#0D9488' }, data: dowData.map(d => d.orders) }
-      ]
-    }), rows.length > 0, p => {
-      const fullDay = DAY_ORDER[p.dataIndex];
-      if (fullDay) toggleSetFilter(state.filters.daysOfWeek, fullDay);
-    });
-
-    const peakDay = [...dowData].sort((a, b) => b.netRev - a.netRev)[0];
-    document.getElementById('s8-insight-dow').innerHTML = peakDay
-      ? `<strong>${peakDay.key}</strong> is #1 at <strong>${fmtINR(peakDay.netRev)}</strong> (${fmtNum(peakDay.orders)} orders). Weekdays drive <strong>${fmtPct(safeDiv(dowData.slice(0, 5).reduce((a, b) => a + b.netRev, 0), sum.netRev) * 100, 1)}</strong> of total revenue.`
-      : 'No daily data.';
-
-    // Month x Category Heatmap
-    const months = [...new Set(rows.map(r => r.MonthKey))].sort();
     const cats = ['Clothing', 'Shoes', 'Accessories'];
-    const heatData = [];
-    let maxCell = 1;
-    let cellSum = 0;
-    months.forEach((m, mi) => {
-      cats.forEach((c, ci) => {
-        const val = Math.round(rows.filter(r => r.MonthKey === m && r.Category === c).reduce((a, b) => a + b.NetRevenue, 0));
-        if (val > maxCell) maxCell = val;
-        cellSum += val;
-        heatData.push([mi, ci, val]);
-      });
-    });
-    const avgCell = safeDiv(cellSum, heatData.length);
+    const mNo = cats.map(c => { const s = rows.filter(r => r.Category === c && r.Discount === 0); return Number((safeDiv(s.reduce((a, b) => a + b.Profit, 0), s.reduce((a, b) => a + b.NetRevenue, 0)) * 100).toFixed(2)); });
+    const mHi = cats.map(c => { const s = rows.filter(r => r.Category === c && r.Discount >= 16); return Number((safeDiv(s.reduce((a, b) => a + b.Profit, 0), s.reduce((a, b) => a + b.NetRevenue, 0)) * 100).toFixed(2)); });
 
-    renderChart('s8-chart-heatmap', tc => ({
-      tooltip: {
-        formatter: p => {
-          const [mi, ci, val] = p.data;
-          return ttCard(`${months[mi]} · ${cats[ci]}`, [
-            { color: CAT_COLORS[cats[ci]], label: 'Net Revenue', value: fmtINR(val) },
-            { label: 'vs Cell Average', value: `${val >= avgCell ? '+' : ''}${fmtINR(val - avgCell)}` }
-          ]);
-        }
-      },
-      grid: { left: 82, right: 16, top: 18, bottom: 48 },
-      xAxis: { type: 'category', data: months, axisLabel: { color: tc.text, fontSize: 10, rotate: 40 } },
-      yAxis: { type: 'category', data: cats, axisLabel: { color: tc.text, fontSize: 11 } },
-      visualMap: { min: 0, max: maxCell, show: false, inRange: { color: ['#F3E8FF', '#A78BFA', '#7C3AED', '#4C1D95'] } },
-      series: [{ type: 'heatmap', data: heatData, itemStyle: { borderColor: tc.tooltipBg, borderWidth: 1 } }]
-    }), heatData.length > 0);
-
-    document.getElementById('s8-insight-heatmap').innerHTML =
-      `October festive peaks create sharp seasonal demand spikes across Clothing and Shoes—lock inventory builds by September 15.`;
-  }
-
-  // --- SLIDE 9: WHAT-IF SIMULATOR ---
-  function renderSlide9(rows, sum) {
-    const cap = state.sim.discCap;
-    const shoeLift = state.sim.shoeLift / 100;
-    const accAttach = state.sim.accAttach / 100;
-    const upiShift = state.sim.upiShift / 100;
-
-    let discRecovery = 0;
-    let shoeRevAdd = 0, shoeProfAdd = 0;
-    let accRevAdd = 0, accProfAdd = 0;
-
-    for (const r of rows) {
-      if (r.Discount > cap) {
-        const saved = r.GrossSales * ((r.Discount - cap) / 100);
-        discRecovery += saved;
-      }
-      if (r.Category === 'Shoes') {
-        const add = r.NetRevenue * shoeLift * 0.45;
-        shoeRevAdd += add;
-        shoeProfAdd += add * 0.35;
-      }
-      if (r.Category === 'Accessories') {
-        const add = r.NetRevenue * accAttach;
-        accRevAdd += add;
-        accProfAdd += add * 0.3525;
-      }
-    }
-
-    const cashRev = rows.filter(r => r.PaymentMode === 'Cash').reduce((a, b) => a + b.NetRevenue, 0);
-    const upiProfAdd = cashRev * upiShift * 0.012;
-
-    const simRev = sum.netRev + discRecovery + shoeRevAdd + accRevAdd;
-    const simProf = sum.profit + discRecovery + shoeProfAdd + accProfAdd + upiProfAdd;
-    const simMargin = safeDiv(simProf, simRev) * 100;
-    const profUplift = simProf - sum.profit;
-
-    document.getElementById('s9-sim-kpis').innerHTML = [
-      { cls: '', label: 'Baseline Profit', val: fmtINR(sum.profit, true), badge: fmtPct(sum.marginPct), sub: `Baseline Rev ${fmtINR(sum.netRev, true)}` },
-      { cls: 'kpi-green', label: 'Simulated Profit', val: fmtINR(simProf, true), badge: fmtPct(simMargin), sub: `Sim Rev ${fmtINR(simRev, true)}` },
-      { cls: 'kpi-teal', label: 'Net Profit Uplift', val: `+${fmtINR(profUplift, true)}`, badge: `+${(simMargin - sum.marginPct).toFixed(2)} pp`, sub: 'Direct EBITDA expansion' },
-      { cls: 'kpi-gold', label: 'Discount Cap Savings', val: fmtINR(discRecovery, true), badge: `Max ${cap}%`, sub: 'Margin preserved from markdowns' }
-    ].map(k => `
-      <div class="kpi-card ${k.cls}" data-kpi-tip='${JSON.stringify({ title: k.label, rows: [{ label: 'Value', value: k.val }, { label: 'Impact', value: k.sub }] })}'>
-        <div class="kpi-header-row"><span class="kpi-label">${k.label}</span><span class="kpi-delta-badge positive">${k.badge}</span></div>
-        <div class="kpi-val-row"><span class="kpi-value">${k.val}</span></div>
-        <span class="kpi-sub">${k.sub}</span>
-      </div>`).join('');
-
-    document.getElementById('s9-sim-summary').innerHTML =
-      `Combined strategy yields <strong>+${fmtINR(profUplift)}</strong> in incremental operating profit, lifting margin from <strong>${fmtPct(sum.marginPct)}</strong> to <strong>${fmtPct(simMargin)}</strong>.`;
-
-    renderChart('s9-chart-sim', tc => ({
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow' },
-        formatter: params => ttCard(params[0].name, params.map(p => ({ color: p.color, label: p.seriesName, value: fmtINR(p.value) })))
-      },
-      legend: { top: 0, textStyle: { color: tc.text, fontSize: 12 } },
-      grid: { left: 54, right: 18, top: 32, bottom: 28 },
-      xAxis: { type: 'category', data: ['Net Revenue', 'Operating Profit'], axisLabel: { color: tc.text, fontSize: 12 } },
-      yAxis: { type: 'value', axisLabel: { color: tc.text, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+    renderChart('s7-chart-catdisc', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => ttCard(p[0].name, p.map(s => ({ color: s.color, label: s.seriesName, value: fmtPct(s.value) }))) },
+      legend: { top: 0, textStyle: { color: tc.text, fontSize: 11 } },
+      grid: { left: 46, right: 16, top: 30, bottom: 26 },
+      xAxis: { type: 'category', data: cats, axisLabel: { color: tc.text } },
+      yAxis: { type: 'value', min: 0, max: 50, axisLabel: { color: tc.text, formatter: '{value}%' }, splitLine: { lineStyle: { color: tc.grid } } },
       series: [
-        { name: 'Baseline', type: 'bar', barMaxWidth: 46, itemStyle: { color: '#64748B', borderRadius: [6, 6, 0, 0] }, data: [Math.round(sum.netRev), Math.round(sum.profit)] },
-        { name: 'Simulated', type: 'bar', barMaxWidth: 46, itemStyle: { color: '#059669', borderRadius: [6, 6, 0, 0] }, data: [Math.round(simRev), Math.round(simProf)] }
+        { name: '0% Discount Margin', type: 'bar', barMaxWidth: 34, itemStyle: { color: '#059669', borderRadius: [5, 5, 0, 0] }, data: mNo },
+        { name: '16-30% Discount Margin', type: 'bar', barMaxWidth: 34, itemStyle: { color: '#DC2626', borderRadius: [5, 5, 0, 0] }, data: mHi }
       ]
     }), rows.length > 0);
 
-    document.getElementById('s9-insight-sim').innerHTML =
-      `Capping discounts at <strong>${cap}%</strong> alone recovers <strong>${fmtINR(discRecovery)}</strong> in direct operating profit.`;
+    const rVal = pearsonR(rows.map(r => r.Discount), rows.map(r => r.Quantity));
+    renderStoryPanel('s7-story', {
+      keyLabel: 'Discount Elasticity (r)',
+      keyValue: rVal.toFixed(4),
+      keySub: 'Correlation between Discount % and Units Sold',
+      bullets: [
+        `Basket size stays flat (~<strong>2.1 units</strong>) regardless of discount depth.`,
+        `High discounts (16–30%) cut margin from <strong>${fmtPct(rateData[0].marginPct)}</strong> down to <strong>${fmtPct(rateData[6].marginPct)}</strong> at 30%.`,
+        `100% of transactions comply with the <strong>30% policy cap</strong>.`
+      ],
+      why: 'Answers Q3 & Objective 3: Unconditioned markdowns subsidize existing demand instead of driving incremental volume.',
+      actionLabel: 'Action: 15% Unbundled Cap',
+      actionText: 'Cap unbundled markdowns at 15% and require 3+ items or ₹3,500 cart value to unlock 20–30% discounts.'
+    });
   }
 
-  // --- SLIDE 10: STORE ACTION REGISTER ---
-  function renderSlide10(rows) {
+  // --- SLIDE 8: STORE PERFORMANCE (Q4) ---
+  function renderSlide8(rows, sum) {
     const storeMap = groupBy(rows, r => r.StoreID);
-    const stores = [...storeMap.values()];
-    const sortedRev = [...stores].map(s => s.netRev).sort((a, b) => a - b);
-    const sortedProf = [...stores].map(s => s.profit).sort((a, b) => a - b);
-    const medRev = sortedRev.length ? sortedRev[Math.floor(sortedRev.length / 2)] : 0;
-    const medProf = sortedProf.length ? sortedProf[Math.floor(sortedProf.length / 2)] : 0;
+    const stores = [...storeMap.values()].sort((a, b) => b.netRev - a.netRev);
+    const avgRev = safeDiv(sum.netRev, stores.length);
+    const shown = state.s8AllStores ? stores : [...stores.slice(0, 10), ...stores.slice(-10)];
 
-    stores.forEach(s => {
-      if (s.netRev >= medRev && s.profit >= medProf) { s.quad = 'Strong Performer'; s.badge = 'badge-green'; s.action = 'Codify playbook & mentor peers'; }
-      else if (s.netRev >= medRev && s.profit < medProf) { s.quad = 'Margin Problem'; s.badge = 'badge-red'; s.action = 'Cap cashier discounts at 10%'; }
-      else if (s.netRev < medRev && s.profit >= medProf) { s.quad = 'Growth Opportunity'; s.badge = 'badge-violet'; s.action = 'Drive local footfall & omnichannel'; }
-      else { s.quad = 'Needs Investigation'; s.badge = 'badge-amber'; s.action = 'Rebalance Footwear SKU depth'; }
-    });
+    renderChart('s8-chart-rank', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => { const s = shown[p[0].dataIndex]; return ttCard(s.key, [{ color: p[0].color, label: 'Net Revenue', value: fmtINR(s.netRev) }, { label: 'vs Store Avg', value: `${s.netRev >= avgRev ? '+' : ''}${fmtINR(s.netRev - avgRev)}` }, { label: 'Margin %', value: fmtPct(s.marginPct) }, { label: 'Shoe Orders', value: fmtNum(s.shoeOrders) }]); } },
+      grid: { left: 64, right: 18, top: 18, bottom: 26 },
+      xAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      yAxis: { type: 'category', data: shown.map(s => s.key).reverse(), axisLabel: { color: tc.text, fontSize: 10 } },
+      series: [{ type: 'bar', markLine: { silent: true, data: [{ xAxis: avgRev }] }, itemStyle: { borderRadius: [0, 4, 4, 0], color: p => (shown[shown.length - 1 - p.dataIndex].netRev >= avgRev ? '#7C3AED' : '#D97706') }, data: shown.map(s => Math.round(s.netRev)).reverse() }]
+    }), shown.length > 0, p => { state.filters.store = (state.filters.store === p.name) ? '' : p.name; document.getElementById('filter-store-select').value = state.filters.store; renderAll(); });
 
-    stores.sort((a, b) => state.sortAsc ? (a[state.sortCol] > b[state.sortCol] ? 1 : -1) : (a[state.sortCol] < b[state.sortCol] ? 1 : -1));
-    document.getElementById('s10-table-count').textContent = `${stores.length} Stores`;
+    renderChart('s8-chart-scatter', tc => ({
+      tooltip: { formatter: p => { const s = p.data.raw; return ttCard(s.key, [{ color: p.color, label: 'Net Revenue', value: fmtINR(s.netRev) }, { label: 'Margin %', value: fmtPct(s.marginPct) }, { label: 'Orders / Shoes', value: `${s.orders} (${s.shoeOrders} shoes)` }]); } },
+      grid: { left: 48, right: 16, top: 18, bottom: 28 },
+      xAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      yAxis: { type: 'value', min: 28, max: 40, axisLabel: { color: tc.text, fontSize: 10, formatter: '{value}%' }, splitLine: { lineStyle: { color: tc.grid } } },
+      series: [{
+        type: 'scatter', symbolSize: (v, p) => Math.max(8, Math.min(20, p.data.raw.orders * 0.45)),
+        markLine: { silent: true, lineStyle: { type: 'dashed', color: tc.text }, data: [{ xAxis: avgRev }, { yAxis: sum.marginPct }] },
+        data: stores.map(s => ({ value: [Math.round(s.netRev), Number(s.marginPct.toFixed(2))], raw: s, itemStyle: { color: s.netRev >= avgRev && s.marginPct >= sum.marginPct ? '#059669' : (s.netRev < avgRev ? '#D97706' : '#DC2626') } }))
+      }]
+    }), stores.length > 0, p => { state.filters.store = (state.filters.store === p.data.raw.key) ? '' : p.data.raw.key; document.getElementById('filter-store-select').value = state.filters.store; renderAll(); });
 
-    document.getElementById('s10-store-table-wrap').innerHTML = `
-      <table class="bi-table" id="s10-table">
-        <thead>
-          <tr>
-            <th data-col="key">Store</th>
-            <th data-col="quad">Classification</th>
-            <th data-col="orders">Orders</th>
-            <th data-col="shoeOrders">Shoe Orders</th>
-            <th data-col="netRev">Net Revenue</th>
-            <th data-col="profit">Profit</th>
-            <th data-col="marginPct">Margin %</th>
-            <th data-col="action">Recommended Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${stores.map(s => `
-            <tr data-store="${s.key}" class="${state.filters.store === s.key ? 'selected-row' : ''}">
-              <td title="${s.key}">${s.key}</td>
-              <td><span class="badge-pill ${s.badge}">${s.quad}</span></td>
-              <td>${s.orders}</td>
-              <td>${s.shoeOrders}</td>
-              <td>${fmtINR(s.netRev)}</td>
-              <td>${fmtINR(s.profit)}</td>
-              <td>${fmtPct(s.marginPct)}</td>
-              <td title="${s.action}">${s.action}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
-
-    document.querySelectorAll('#s10-table th').forEach(th => {
-      th.onclick = () => {
-        const col = th.dataset.col;
-        state.sortAsc = (state.sortCol === col) ? !state.sortAsc : false;
-        state.sortCol = col;
-        renderSlide10(rows);
-      };
-    });
-
-    document.querySelectorAll('#s10-table tbody tr').forEach(tr => {
-      tr.onclick = () => {
-        const sid = tr.dataset.store;
-        state.filters.store = (state.filters.store === sid) ? '' : sid;
-        document.getElementById('filter-store-select').value = state.filters.store;
-        renderAll();
-      };
+    const topS = stores[0], botS = stores[stores.length - 1];
+    renderStoryPanel('s8-story', {
+      keyLabel: 'Top vs Bottom Store Gap',
+      keyValue: topS && botS ? `${safeDiv(topS.netRev, botS.netRev).toFixed(1)}x` : '0x',
+      keySub: topS && botS ? `${topS.key} (${fmtINR(topS.netRev, true)}) vs ${botS.key} (${fmtINR(botS.netRev, true)})` : '',
+      bullets: [
+        topS && botS ? `<strong>Hypothesis — Footwear Mix:</strong> ${botS.key} logged only ${botS.shoeOrders} shoe orders vs ${topS.shoeOrders} at ${topS.key}.` : 'No store data.',
+        `<strong>Hypothesis — Order Velocity:</strong> Underperformers average ~23 orders vs ~37 in top performers despite healthy ~35% margins.`,
+        `Store_20 and Store_33 show high sales but compressed margins (~32.5%).`
+      ],
+      why: 'Answers Q4: Underperformance stems from footwear assortment gaps and lower footfall rather than poor unit pricing.',
+      actionLabel: 'Action: Pilot Shoe Stock',
+      actionText: 'Pilot minimum Footwear SKU allocation in bottom-10 stores and audit discount overrides in Store_20/33.'
     });
   }
 
+  // --- SLIDE 9: CUSTOMER SEGMENTATION (Q5) ---
+  function renderSlide9(rows, sum) {
+    // Behaviour-based segments built from available fields
+    const segFn = r => {
+      if (r.CustomerType === 'Unknown') return 'Untracked POS (Unknown)';
+      if (r.NetRevenue >= 3000 && r.Discount <= 5) return `${r.CustomerType} · High-Value Full-Price`;
+      if (r.Discount >= 16) return `${r.CustomerType} · Discount-Driven`;
+      return `${r.CustomerType} · Core Everyday`;
+    };
+    const segMap = groupBy(rows, segFn);
+    const segs = [...segMap.values()].sort((a, b) => b.netRev - a.netRev);
+
+    renderChart('s9-chart-seg', tc => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => { const s = segs[p[0].dataIndex]; return ttCard(s.key, [{ color: '#7C3AED', label: 'Net Revenue', value: fmtINR(s.netRev) }, { label: 'Share', value: fmtPct(safeDiv(s.netRev, sum.netRev) * 100, 1) }, { label: 'Margin %', value: fmtPct(s.marginPct) }, { label: 'Weekend Share', value: fmtPct(s.wkndShare, 1) }]); } },
+      grid: { left: 175, right: 20, top: 16, bottom: 26 },
+      xAxis: { type: 'value', axisLabel: { color: tc.text, fontSize: 10, formatter: v => fmtINR(v, true) }, splitLine: { lineStyle: { color: tc.grid } } },
+      yAxis: { type: 'category', data: segs.map(s => s.key).reverse(), axisLabel: { color: tc.text, fontSize: 10.5 } },
+      series: [{ type: 'bar', barMaxWidth: 22, itemStyle: { borderRadius: [0, 5, 5, 0], color: p => (segs[segs.length - 1 - p.dataIndex].key.includes('High-Value') ? '#059669' : (segs[segs.length - 1 - p.dataIndex].key.includes('Discount') ? '#DC2626' : '#7C3AED')) }, data: segs.map(s => Math.round(s.netRev)).reverse() }]
+    }), segs.length > 0);
+
+    const strategyFor = k => {
+      if (k.includes('High-Value')) return 'VIP early festive access & Footwear styling';
+      if (k.includes('Discount-Driven')) return 'Migrate to 3-item bundle thresholds';
+      if (k.includes('Unknown')) return 'Mandatory POS phone capture + UPI reward';
+      return 'Weekend accessory cross-sell prompts';
+    };
+
+    document.getElementById('s9-seg-table').innerHTML = `<table class="bi-table"><thead><tr><th>Behavioural Segment</th><th>Orders</th><th>Rev Share</th><th>Margin %</th><th>Targeted Strategy</th></tr></thead><tbody>${segs.map(s => `<tr><td title="${s.key}">${s.key}</td><td>${s.orders}</td><td>${fmtPct(safeDiv(s.netRev, sum.netRev) * 100, 1)}</td><td>${fmtPct(s.marginPct)}</td><td title="${strategyFor(s.key)}">${strategyFor(s.key)}</td></tr>`).join('')}</tbody></table>`;
+
+    const hiSeg = segs.find(s => s.key.includes('High-Value')) || segs[0];
+    renderStoryPanel('s9-story', {
+      keyLabel: 'Top Margin Segment',
+      keyValue: hiSeg ? fmtPct(hiSeg.marginPct) : '0%',
+      keySub: hiSeg ? `${hiSeg.key} (${fmtNum(hiSeg.orders)} orders)` : '',
+      bullets: [
+        `Dataset has no CustomerID, so segments combine <strong>CustomerType, Basket Tier & Discount Reliance</strong>.`,
+        `High-Value Full-Price buyers deliver ~40% margins without markdowns.`,
+        `<strong>Untracked POS (Unknown)</strong> represents ${fmtPct(safeDiv((segMap.get('Untracked POS (Unknown)') || { netRev: 0 }).netRev, sum.netRev) * 100, 1)} of revenue.`
+      ],
+      why: 'Answers Q5: Tailoring bundles to Discount-Driven buyers and capturing Unknown shoppers builds repeat weekend loyalty.',
+      actionLabel: 'Action: Segment Offers',
+      actionText: 'Require POS phone capture for Unknown checkouts and target High-Value buyers with weekend VIP previews.'
+    });
+  }
+
+  // --- SLIDE 10: WEEKEND GROWTH SIMULATOR ---
+  function renderSlide10(rows, sum) {
+    const { wkndDisc, wkndCat, wkndTraffic, wkndAov } = state.sim;
+    const wkndRows = rows.filter(r => r.DayType === 'Weekend');
+    const targetRows = wkndCat === 'All' ? wkndRows : wkndRows.filter(r => r.Category === wkndCat);
+
+    const baseWkndRev = sum.wkndRev;
+    const baseWkndProf = wkndRows.reduce((a, b) => a + b.Profit, 0);
+    const catBaseRev = targetRows.reduce((a, b) => a + b.NetRevenue, 0);
+    const catAvgDisc = safeDiv(targetRows.reduce((a, b) => a + b.Discount, 0), targetRows.length);
+
+    const mult = (1 + wkndTraffic / 100) * (1 + wkndAov / 100) * (1 - Math.max(0, wkndDisc - catAvgDisc) / 100);
+    const addRev = catBaseRev * (mult - 1);
+    const projWkndRev = baseWkndRev + addRev;
+    const projLiftPct = safeDiv(addRev, baseWkndRev) * 100;
+    const projWkndProf = baseWkndProf + addRev * 0.32;
+    const projWkndMargin = safeDiv(projWkndProf, projWkndRev) * 100;
+
+    document.getElementById('s10-sim-kpis').innerHTML = [
+      { cls: '', l: 'Baseline Weekend Sales', v: fmtINR(baseWkndRev, true), b: `${sum.wkndOrders} Orders`, s: 'Current weekend run-rate' },
+      { cls: 'kpi-green', l: 'Projected Weekend Sales', v: fmtINR(projWkndRev, true), b: `+${projLiftPct.toFixed(1)}% Lift`, s: `Target (+15%): ${fmtINR(baseWkndRev * 1.15, true)}` },
+      { cls: 'kpi-teal', l: 'Projected Weekend Margin', v: fmtPct(projWkndMargin), b: fmtINR(projWkndProf, true), s: `Promo Cap: ${wkndDisc}% (<=30%)` },
+      { cls: 'kpi-gold', l: 'Target Attainment', v: `${Math.min(150, safeDiv(projLiftPct, 15) * 100).toFixed(0)}%`, b: projLiftPct >= 15 ? 'Goal Met ✓' : 'Below +15%', s: `Focus: ${wkndCat}` }
+    ].map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-header-row"><span class="kpi-label">${k.l}</span><span class="kpi-delta-badge ${projLiftPct >= 15 ? 'positive' : 'neutral'}">${k.b}</span></div><div class="kpi-val-row"><span class="kpi-value">${k.v}</span></div><span class="kpi-sub">${k.s}</span></div>`).join('');
+
+    document.getElementById('sim-progress-label').textContent = `${projLiftPct.toFixed(1)}% / +15.0% Target`;
+    document.getElementById('sim-progress-fill').style.width = `${Math.max(0, Math.min(100, safeDiv(projLiftPct, 15) * 100))}%`;
+
+    renderChart('s10-chart-gauge', tc => ({
+      tooltip: { formatter: () => ttCard('Weekend Growth Simulation', [{ color: '#059669', label: 'Projected Lift', value: `+${projLiftPct.toFixed(1)}%` }, { label: 'Target', value: '+15.0%' }, { label: 'Projected Sales', value: fmtINR(projWkndRev) }]) },
+      series: [{
+        type: 'gauge', startAngle: 195, endAngle: -15, min: 0, max: 30,
+        progress: { show: true, width: 16, roundCap: true, itemStyle: { color: projLiftPct >= 15 ? '#059669' : '#7C3AED' } },
+        axisLine: { lineStyle: { width: 16, color: [[1, tc.grid]] } },
+        pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
+        detail: { formatter: v => `+${v.toFixed(1)}%`, color: tc.title, fontSize: 26, fontWeight: 800, offsetCenter: [0, '6%'] },
+        data: [{ value: Number(projLiftPct.toFixed(1)) }]
+      }]
+    }), baseWkndRev > 0);
+
+    document.getElementById('s10-insight-sim').innerHTML = `Indicative scenario projects <strong>+${projLiftPct.toFixed(1)}%</strong> weekend sales (${fmtINR(projWkndRev)}) at <strong>${fmtPct(projWkndMargin)}</strong> margin.`;
+  }
+
   // =========================================================================
-  // 9. SLIDE NAVIGATION, MODALS, TOUR & DIAGNOSTICS
+  // NAVIGATION, DIAGNOSTICS, MODALS & BOOTSTRAP
   // =========================================================================
+  window.fwGoSlide = goToSlide;
   function goToSlide(idx) {
     const slides = document.querySelectorAll('.slide');
-    const clamped = Math.max(0, Math.min(slides.length - 1, idx));
-    state.currentSlide = clamped;
-    slides.forEach((s, i) => s.classList.toggle('active', i === clamped));
-    document.getElementById('footer-slide-indicator').textContent = `Slide ${clamped + 1} / ${slides.length}`;
-    document.getElementById('btn-prev-slide').disabled = clamped === 0;
-    document.getElementById('btn-next-slide').disabled = clamped === slides.length - 1;
-    document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === clamped));
+    const c = Math.max(0, Math.min(slides.length - 1, idx));
+    state.currentSlide = c;
+    slides.forEach((s, i) => s.classList.toggle('active', i === c));
+    document.getElementById('footer-slide-indicator').textContent = `Slide ${c + 1} / ${slides.length}`;
+    document.getElementById('btn-prev-slide').disabled = c === 0;
+    document.getElementById('btn-next-slide').disabled = c === slides.length - 1;
+    document.querySelectorAll('.slide-dot').forEach((d, i) => d.classList.toggle('active', i === c));
     document.getElementById('stage-container').scrollTop = 0;
 
-    // Update notes drawer
-    const meta = SLIDE_META[clamped];
-    document.getElementById('speaker-notes-body').innerHTML =
-      `<h4 style="color:var(--text-main);">${clamped + 1}. ${meta.title}</h4>` +
+    const meta = SLIDE_META[c];
+    document.getElementById('speaker-notes-body').innerHTML = `<h4 style="color:var(--text-main);">${c + 1}. ${meta.title}</h4>` +
       meta.notes.map(n => `<div style="background:var(--bg-card-subtle); padding:10px; border-left:3px solid var(--color-accent); border-radius:6px;">${n}</div>`).join('');
 
     setTimeout(resizeActiveSlideCharts, 290);
@@ -1321,83 +931,34 @@
     const body = document.getElementById('diagnostics-body');
     const active = document.querySelector('.slide.active');
     if (!active) return;
-    const items = [];
-    active.querySelectorAll('.chart-container, .chart-container-tall').forEach(el => {
-      const r = el.getBoundingClientRect();
-      const warn = r.height < 100 || r.width < 100;
-      items.push(`<div style="padding:8px; border-radius:6px; background:var(--bg-card-subtle); display:flex; justify-content:space-between;">
-        <span>${el.id}</span>
-        <strong style="color:${warn ? '#DC2626' : '#059669'}">${Math.round(r.width)}×${Math.round(r.height)}px ${warn ? '⚠️' : '✓'}</strong>
-      </div>`);
+    const charts = [...active.querySelectorAll('.chart-container')].map(el => {
+      const r = el.getBoundingClientRect(), warn = r.height < 100 || r.width < 100;
+      return `<div style="padding:8px; border-radius:6px; background:var(--bg-card-subtle); display:flex; justify-content:space-between;"><span>${el.id}</span><strong style="color:${warn ? '#DC2626' : '#059669'}">${Math.round(r.width)}×${Math.round(r.height)}px ${warn ? '⚠️' : '✓'}</strong></div>`;
     });
-    body.innerHTML = `<div style="font-weight:700;">Active Slide Charts (${items.length})</div>` + items.join('');
+    body.innerHTML = `<div style="font-weight:700;">Active Slide Charts (${charts.length})</div>` + (charts.length ? charts.join('') : '<span>No charts on this slide.</span>');
   }
 
-  function openFocusModal(chartId) {
-    const srcEl = document.getElementById(chartId);
-    const srcChart = srcEl && window.echarts ? window.echarts.getInstanceByDom(srcEl) : null;
-    if (!srcChart) return;
-    const modal = document.getElementById('focus-modal');
-    const titleEl = srcEl.closest('.card').querySelector('.card-title span');
-    document.getElementById('focus-modal-title').textContent = titleEl ? titleEl.textContent : 'Expanded View';
-    modal.classList.add('open');
-
-    const fcEl = document.getElementById('focus-chart-container');
-    let fc = window.echarts.getInstanceByDom(fcEl) || window.echarts.init(fcEl);
-    fc.setOption(srcChart.getOption(), true);
-    setTimeout(() => fc.resize(), 80);
-  }
-
-  function exportCSV(filename, rows) {
-    const csv = window.Papa ? window.Papa.unparse(rows) : '';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-  }
-
-  // =========================================================================
-  // 10. EVENT LISTENERS & BOOTSTRAP
-  // =========================================================================
   function initUI() {
-    // Slide dots & Overview Grid
-    const dotsWrap = document.getElementById('slide-dots');
-    const gridWrap = document.getElementById('overview-grid');
+    const dots = document.getElementById('slide-dots'), grid = document.getElementById('overview-grid');
     SLIDE_META.forEach((m, i) => {
-      const dot = document.createElement('span');
-      dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
-      dot.title = `${i + 1}. ${m.title}`;
-      dot.onclick = () => goToSlide(i);
-      dotsWrap.appendChild(dot);
-
-      const thumb = document.createElement('div');
-      thumb.className = 'overview-thumb' + (i === 0 ? ' active' : '');
-      thumb.innerHTML = `<span style="font-size:11px; font-weight:800; color:var(--color-accent);">SLIDE ${i + 1}</span><strong style="font-size:12.5px;">${m.title}</strong>`;
-      thumb.onclick = () => { goToSlide(i); document.getElementById('overview-modal').classList.remove('open'); };
-      gridWrap.appendChild(thumb);
+      const d = document.createElement('span'); d.className = 'slide-dot' + (i === 0 ? ' active' : ''); d.title = `${i + 1}. ${m.title}`; d.onclick = () => goToSlide(i); dots.appendChild(d);
+      const t = document.createElement('div'); t.className = 'overview-thumb' + (i === 0 ? ' active' : '');
+      t.innerHTML = `<span style="font-size:11px; font-weight:800; color:var(--color-accent);">SLIDE ${i + 1}</span><strong style="font-size:12px;">${m.title}</strong>`;
+      t.onclick = () => { goToSlide(i); document.getElementById('overview-modal').classList.remove('open'); };
+      grid.appendChild(t);
     });
 
     document.getElementById('btn-prev-slide').onclick = () => goToSlide(state.currentSlide - 1);
     document.getElementById('btn-next-slide').onclick = () => goToSlide(state.currentSlide + 1);
-    document.getElementById('btn-toggle-slicers').onclick = () => {
-      document.getElementById('slicer-panel').classList.toggle('collapsed');
-      setTimeout(resizeActiveSlideCharts, 300);
-    };
+    document.getElementById('btn-toggle-slicers').onclick = () => { document.getElementById('slicer-panel').classList.toggle('collapsed'); setTimeout(resizeActiveSlideCharts, 300); };
 
     document.getElementById('btn-reset-filters').onclick = () => {
       const dates = state.cleanRows.map(r => r.Date).sort();
-      state.filters = {
-        dateStart: dates[0] || '', dateEnd: dates[dates.length - 1] || '',
-        categories: new Set(), store: '', discountBands: new Set(),
-        customerTypes: new Set(), paymentModes: new Set(), dayTypes: new Set(),
-        daysOfWeek: new Set(), excludeUnknown: false
-      };
+      state.filters = { dateStart: dates[0] || '', dateEnd: dates[dates.length - 1] || '', categories: new Set(), store: '', dayTypes: new Set(), daysOfWeek: new Set(), seasons: new Set(), discountBands: new Set(), customerTypes: new Set(), excludeMissing: false };
       document.getElementById('filter-store-select').value = '';
       document.getElementById('filter-store-search').value = '';
-      document.getElementById('toggle-exclude-unknown').checked = false;
-      document.getElementById('filter-date-start').value = state.filters.dateStart;
-      document.getElementById('filter-date-end').value = state.filters.dateEnd;
+      document.getElementById('toggle-exclude-missing').checked = false;
+      document.getElementById('missing-toggle-label').textContent = 'Impute (0% / Unknown)';
       renderAll();
     };
 
@@ -1406,167 +967,125 @@
     document.getElementById('filter-store-select').onchange = e => { state.filters.store = e.target.value; renderAll(); };
     document.getElementById('filter-store-search').oninput = e => {
       const q = e.target.value.toLowerCase();
-      const sel = document.getElementById('filter-store-select');
       const stores = [...new Set(state.cleanRows.map(r => r.StoreID))].sort().filter(s => s.toLowerCase().includes(q));
-      sel.innerHTML = `<option value="">All Matching (${stores.length})</option>` + stores.map(s => `<option value="${s}">${s}</option>`).join('');
+      document.getElementById('filter-store-select').innerHTML = `<option value="">Matching (${stores.length})</option>` + stores.map(s => `<option value="${s}">${s}</option>`).join('');
     };
 
-    const syncUnknownToggle = checked => {
-      state.filters.excludeUnknown = checked;
-      document.getElementById('toggle-exclude-unknown').checked = checked;
-      document.getElementById('unknown-toggle-label').textContent = checked ? 'Exclude Unknowns' : 'Retain Unknowns (Default)';
+    const syncMissing = chk => {
+      state.filters.excludeMissing = chk;
+      document.getElementById('toggle-exclude-missing').checked = chk;
+      document.getElementById('missing-toggle-label').textContent = chk ? 'Exclude Raw Blanks' : 'Impute (0% / Unknown)';
       renderAll();
     };
-    document.getElementById('toggle-exclude-unknown').onchange = e => syncUnknownToggle(e.target.checked);
-    document.getElementById('btn-s3-toggle-unknown').onclick = () => syncUnknownToggle(!state.filters.excludeUnknown);
+    document.getElementById('toggle-exclude-missing').onchange = e => syncMissing(e.target.checked);
+    document.getElementById('btn-s3-toggle-missing').onclick = () => syncMissing(!state.filters.excludeMissing);
 
-    // Zoom & Theme & Meeting Mode
-    const setZoom = z => {
-      state.zoomLevel = Math.max(80, Math.min(130, z));
-      document.body.className = document.body.className.replace(/zoom-level-\d+/g, '') + ` zoom-level-${state.zoomLevel}`;
-      document.getElementById('zoom-val-label').textContent = `${state.zoomLevel}%`;
-      setTimeout(resizeActiveSlideCharts, 150);
+    document.getElementById('btn-s5-toggle').onclick = () => {
+      state.s5TableView = !state.s5TableView;
+      document.getElementById('s5-charts-col').style.display = state.s5TableView ? 'none' : 'flex';
+      document.getElementById('s5-table-col').style.display = state.s5TableView ? 'flex' : 'none';
+      if (!state.s5TableView) setTimeout(resizeActiveSlideCharts, 80);
     };
+
+    document.getElementById('btn-s8-rank-mode').onclick = e => {
+      state.s8AllStores = !state.s8AllStores;
+      e.target.textContent = state.s8AllStores ? 'Mode: All 50 Stores' : 'Mode: Top 10 & Bottom 10';
+      renderSlide8(getFilteredRows(), computeSummary(getFilteredRows()));
+    };
+
+    const exportCSV = (name, rows) => {
+      const blob = new Blob([window.Papa ? window.Papa.unparse(rows) : ''], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    };
+    document.getElementById('btn-s5-export').onclick = () => exportCSV('fashionwave_filtered.csv', getFilteredRows());
+    document.getElementById('btn-s12-export').onclick = () => exportCSV('fashionwave_store_summary.csv', [...groupBy(getFilteredRows(), r => r.StoreID).values()]);
+
+    // Simulator
+    const bindSim = (id, key, fmt) => {
+      document.getElementById(id).oninput = e => {
+        state.sim[key] = Number(e.target.value);
+        document.getElementById(`${id}-val`).textContent = fmt(state.sim[key]);
+        renderSlide10(getFilteredRows(), computeSummary(getFilteredRows()));
+      };
+    };
+    bindSim('sim-wknd-disc', 'wkndDisc', v => `${v}%`);
+    bindSim('sim-wknd-traffic', 'wkndTraffic', v => `+${v}%`);
+    bindSim('sim-wknd-aov', 'wkndAov', v => `+${v}%`);
+    document.getElementById('sim-wknd-cat').onchange = e => { state.sim.wkndCat = e.target.value; renderSlide10(getFilteredRows(), computeSummary(getFilteredRows())); };
+    document.getElementById('btn-sim-reset').onclick = () => {
+      state.sim = { wkndDisc: 10, wkndCat: 'All', wkndTraffic: 8, wkndAov: 7 };
+      document.getElementById('sim-wknd-disc').value = 10; document.getElementById('sim-wknd-disc-val').textContent = '10%';
+      document.getElementById('sim-wknd-traffic').value = 8; document.getElementById('sim-wknd-traffic-val').textContent = '+8%';
+      document.getElementById('sim-wknd-aov').value = 7; document.getElementById('sim-wknd-aov-val').textContent = '+7%';
+      document.getElementById('sim-wknd-cat').value = 'All';
+      renderSlide10(getFilteredRows(), computeSummary(getFilteredRows()));
+    };
+
+    // Zoom, Theme, Meet, Focus, Tour, Shortcuts
+    const setZoom = z => { state.zoomLevel = Math.max(80, Math.min(130, z)); document.body.className = document.body.className.replace(/zoom-level-\d+/g, '') + ` zoom-level-${state.zoomLevel}`; document.getElementById('zoom-val-label').textContent = `${state.zoomLevel}%`; setTimeout(resizeActiveSlideCharts, 150); };
     document.getElementById('btn-zoom-in').onclick = () => setZoom(state.zoomLevel + 10);
     document.getElementById('btn-zoom-out').onclick = () => setZoom(state.zoomLevel - 10);
+    document.getElementById('btn-theme-toggle').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', state.theme); renderAll(); };
+    const toggleMeet = () => { document.body.classList.toggle('meeting-mode'); setTimeout(resizeActiveSlideCharts, 250); };
+    document.getElementById('btn-meeting-mode').onclick = toggleMeet;
+    document.addEventListener('mousemove', e => { if (document.body.classList.contains('meeting-mode')) { const sp = document.getElementById('meeting-spotlight'); sp.style.left = `${e.clientX}px`; sp.style.top = `${e.clientY}px`; } });
 
-    document.getElementById('btn-theme-toggle').onclick = () => {
-      state.theme = state.theme === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', state.theme);
-      renderAll();
-    };
-
-    const toggleMeeting = () => {
-      document.body.classList.toggle('meeting-mode');
-      setTimeout(resizeActiveSlideCharts, 250);
-    };
-    document.getElementById('btn-meeting-mode').onclick = toggleMeeting;
-    document.addEventListener('mousemove', e => {
-      if (document.body.classList.contains('meeting-mode')) {
-        const sp = document.getElementById('meeting-spotlight');
-        sp.style.left = `${e.clientX}px`;
-        sp.style.top = `${e.clientY}px`;
-      }
-    });
-
-    // Notes, Overview, Diag, Focus, Print, Fullscreen
     document.getElementById('btn-notes').onclick = () => document.getElementById('speaker-notes-drawer').classList.toggle('open');
     document.getElementById('btn-close-notes').onclick = () => document.getElementById('speaker-notes-drawer').classList.remove('open');
     document.getElementById('btn-close-diag').onclick = () => document.getElementById('diagnostics-drawer').classList.remove('open');
     document.getElementById('btn-overview').onclick = () => document.getElementById('overview-modal').classList.add('open');
     document.getElementById('btn-close-overview').onclick = () => document.getElementById('overview-modal').classList.remove('open');
     document.getElementById('btn-close-focus').onclick = () => document.getElementById('focus-modal').classList.remove('open');
-    document.querySelectorAll('.btn-focus').forEach(b => b.onclick = () => openFocusModal(b.dataset.chart));
+    document.querySelectorAll('.btn-focus').forEach(b => b.onclick = () => {
+      const srcEl = document.getElementById(b.dataset.chart), src = srcEl && window.echarts ? window.echarts.getInstanceByDom(srcEl) : null;
+      if (!src) return;
+      document.getElementById('focus-modal-title').textContent = srcEl.closest('.card').querySelector('.card-title span').textContent;
+      document.getElementById('focus-modal').classList.add('open');
+      const fcEl = document.getElementById('focus-chart-container');
+      const fc = window.echarts.getInstanceByDom(fcEl) || window.echarts.init(fcEl);
+      fc.setOption(src.getOption(), true); setTimeout(() => fc.resize(), 80);
+    });
     document.getElementById('btn-print').onclick = () => window.print();
-    document.getElementById('btn-fullscreen').onclick = () => {
-      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-      else document.exitFullscreen().catch(() => {});
-    };
+    document.getElementById('btn-fullscreen').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen().catch(() => {}); };
 
-    // Slide 5 toggle & CSV export
-    document.getElementById('btn-s5-view-toggle').onclick = () => {
-      state.s5TableView = !state.s5TableView;
-      document.getElementById('s5-charts-wrap').style.display = state.s5TableView ? 'none' : 'grid';
-      document.getElementById('s5-table-wrap').style.display = state.s5TableView ? 'flex' : 'none';
-      if (!state.s5TableView) setTimeout(resizeActiveSlideCharts, 80);
-    };
-    document.getElementById('btn-s5-export').onclick = () => exportCSV('fashionwave_filtered_orders.csv', getFilteredRows());
-    document.getElementById('btn-s10-export').onclick = () => {
-      const storeMap = groupBy(getFilteredRows(), r => r.StoreID);
-      exportCSV('fashionwave_store_actions.csv', [...storeMap.values()]);
-    };
-
-    // Simulator Sliders
-    const bindSim = (id, key, fmt) => {
-      document.getElementById(id).oninput = e => {
-        state.sim[key] = Number(e.target.value);
-        document.getElementById(`${id}-val`).textContent = fmt(state.sim[key]);
-        renderSlide9(getFilteredRows(), computeSummary(getFilteredRows()));
-      };
-    };
-    bindSim('sim-disc-cap', 'discCap', v => v === 30 ? '30% (Current)' : `${v}% Max`);
-    bindSim('sim-shoe-lift', 'shoeLift', v => `+${v}%`);
-    bindSim('sim-acc-attach', 'accAttach', v => `+${v}%`);
-    bindSim('sim-upi-shift', 'upiShift', v => `+${v}%`);
-    document.getElementById('btn-sim-reset').onclick = () => {
-      state.sim = { discCap: 30, shoeLift: 0, accAttach: 0, upiShift: 0 };
-      document.getElementById('sim-disc-cap').value = 30; document.getElementById('sim-disc-cap-val').textContent = '30% (Current)';
-      document.getElementById('sim-shoe-lift').value = 0; document.getElementById('sim-shoe-lift-val').textContent = '+0%';
-      document.getElementById('sim-acc-attach').value = 0; document.getElementById('sim-acc-attach-val').textContent = '+0%';
-      document.getElementById('sim-upi-shift').value = 0; document.getElementById('sim-upi-shift-val').textContent = '+0%';
-      renderSlide9(getFilteredRows(), computeSummary(getFilteredRows()));
-    };
-
-    // Tour Modal
-    const TOUR_STEPS = [
-      { title: '1. Global Interactive Slicers', desc: 'Use the left Slicer Rail to filter by Category, Store, Discount Band, Customer Type, Payment Mode, or Date Range. Every KPI and chart recalculates live.' },
-      { title: '2. Click Charts to Cross-Filter', desc: 'Click any bar, donut slice, treemap block, or store scatter dot to filter the entire 10-slide deck. Click again to clear.' },
-      { title: '3. Rich Hover Cards & Focus Mode', desc: 'Hover any chart element, KPI card, or (i) info icon for definitions and variance vs average. Click "Focus" on any card to expand it full-screen.' },
-      { title: '4. Live Presentation Shortcuts', desc: 'Press M for Meeting Mode (+10% text + spotlight), F for Fullscreen, G for Slide Grid, N for Speaker Notes, and D for Layout Diagnostics.' }
+    const TOUR = [
+      { t: '1. Story-Driven 12-Slide Layout', d: 'Slides 4–9 pair interactive charts (65%) with a live Story Panel (35%) that updates its numbers, takeaway, and action whenever slicers change.' },
+      { t: '2. Raw Data Cleaning Toggle', d: 'Blank Discount (135 rows) defaults to 0% and blank CustomerType (156 rows) to Unknown. Use the sidebar toggle to exclude raw blanks.' },
+      { t: '3. Click Charts to Cross-Filter', d: 'Click any bar, category slice, or store dot to filter the entire deck. Click "Focus" on any card to expand full-screen.' },
+      { t: '4. Presenter Shortcuts', d: 'Use ←/→ to navigate, M for Meeting Mode (+10% text + spotlight), N for Speaker Notes, G for Grid, D for Diagnostics, and ? for Help.' }
     ];
-    let tourIdx = 0;
-    const showTourStep = i => {
-      tourIdx = i;
-      document.getElementById('tour-step-title').textContent = TOUR_STEPS[i].title;
-      document.getElementById('tour-step-desc').textContent = TOUR_STEPS[i].desc;
-      document.getElementById('tour-step-counter').textContent = `Step ${i + 1} of 4`;
-      document.getElementById('btn-tour-next').textContent = i === 3 ? 'Finish ✓' : 'Next →';
-    };
-    document.getElementById('btn-tour').onclick = () => { showTourStep(0); document.getElementById('tour-modal').classList.add('open'); };
+    let tIdx = 0;
+    const showTour = i => { tIdx = i; document.getElementById('tour-step-title').textContent = TOUR[i].t; document.getElementById('tour-step-desc').textContent = TOUR[i].d; document.getElementById('tour-step-counter').textContent = `Step ${i + 1} of 4`; document.getElementById('btn-tour-next').textContent = i === 3 ? 'Finish ✓' : 'Next →'; };
+    document.getElementById('btn-tour').onclick = () => { showTour(0); document.getElementById('tour-modal').classList.add('open'); };
     document.getElementById('btn-close-tour').onclick = () => document.getElementById('tour-modal').classList.remove('open');
     document.getElementById('btn-tour-skip').onclick = () => document.getElementById('tour-modal').classList.remove('open');
-    document.getElementById('btn-tour-next').onclick = () => {
-      if (tourIdx < 3) showTourStep(tourIdx + 1);
-      else document.getElementById('tour-modal').classList.remove('open');
-    };
+    document.getElementById('btn-tour-next').onclick = () => { if (tIdx < 3) showTour(tIdx + 1); else document.getElementById('tour-modal').classList.remove('open'); };
 
-    // Manual CSV input fallback
     document.getElementById('manual-csv-input').onchange = e => {
-      const file = e.target.files[0];
-      if (!file || !window.Papa) return;
-      window.Papa.parse(file, {
-        header: true, skipEmptyLines: true,
-        complete: res => {
-          if (parseAndClean(res.data, file.name, 'manual file picker')) {
-            document.getElementById('fallback-loader').classList.remove('open');
-          }
-        }
-      });
+      const f = e.target.files[0];
+      if (!f || !window.Papa) return;
+      window.Papa.parse(f, { header: true, skipEmptyLines: true, complete: r => { if (parseAndClean(r.data, f.name, 'manual picker')) document.getElementById('fallback-loader').classList.remove('open'); } });
     };
 
-    // Keyboard Shortcuts
     document.addEventListener('keydown', e => {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(state.currentSlide + 1); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); goToSlide(state.currentSlide - 1); }
       else if (e.key >= '1' && e.key <= '9') goToSlide(Number(e.key) - 1);
-      else if (e.key === '0') goToSlide(9);
-      else if (e.key.toLowerCase() === 'm') toggleMeeting();
+      else if (e.key.toLowerCase() === 'm') toggleMeet();
       else if (e.key.toLowerCase() === 'n') document.getElementById('speaker-notes-drawer').classList.toggle('open');
       else if (e.key.toLowerCase() === 'd') { updateDiagnostics(); document.getElementById('diagnostics-drawer').classList.toggle('open'); }
       else if (e.key.toLowerCase() === 'g') document.getElementById('overview-modal').classList.toggle('open');
       else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
       else if (e.key === '?') document.getElementById('btn-tour').click();
-      else if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
-        document.querySelectorAll('.side-drawer').forEach(d => d.classList.remove('open'));
-      }
+      else if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay,.side-drawer').forEach(x => x.classList.remove('open')); }
     });
 
-    // Hash Routing (#slide-1..10)
-    const checkHash = () => {
-      const m = window.location.hash.match(/^#slide-(\d+)$/);
-      if (m) goToSlide(Number(m[1]) - 1);
-    };
+    const checkHash = () => { const m = window.location.hash.match(/^#slide-(\d+)$/); if (m) goToSlide(Number(m[1]) - 1); };
     window.addEventListener('hashchange', checkHash);
     window.addEventListener('resize', () => setTimeout(resizeActiveSlideCharts, 120));
-
-    checkHash();
-    goToSlide(state.currentSlide);
+    checkHash(); goToSlide(state.currentSlide);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    initUI();
-    loadInitialData();
-  });
+  document.addEventListener('DOMContentLoaded', () => { initUI(); loadInitialData(); });
 })();
