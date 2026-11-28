@@ -1090,6 +1090,25 @@ table.bi-table tbody tr.selected-row {
   font-weight: 600;
 }
 
+#slide-3 .table-wrap, #slide-9 .table-wrap, #slide-11 .table-wrap, #slide-12 .table-wrap {
+  max-height: none;
+  overflow-x: visible;
+}
+
+#slide-3 table.bi-table th, #slide-9 table.bi-table th, #slide-11 table.bi-table th, #slide-12 table.bi-table th,
+#slide-3 table.bi-table td, #slide-9 table.bi-table td, #slide-11 table.bi-table td, #slide-12 table.bi-table td {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+#slide-3 table.bi-table .badge-pill {
+  white-space: nowrap;
+}
+
 .badge-pill {
   display: inline-block;
   padding: 2px 8px;
